@@ -1,6 +1,8 @@
 # joa-dices-elm
 Rewrite of the TypeScript project [JoA Dice](https://github.com/ycardon/joa-dices) in Elm
 
+Test it [here](https://ycardon.github.io)
+
 This is the 5th edition of my language exploration project
 - [Typescript](https://github.com/ycardon/joa-dices) (original)
 - [Rescript](https://github.com/ycardon/joa-dices-rescript)
