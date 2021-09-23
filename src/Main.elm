@@ -4,6 +4,7 @@ import Browser
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
+import Html.Events.Extra exposing (onEnter)
 import JoaDice exposing (..)
 import JoaDiceParser exposing (parseDiceChoices, printDiceChoices)
 import JoaRules exposing (applyDefense)
@@ -65,19 +66,6 @@ init _ =
     )
 
 
-updateDiceChoice : ( Int, Dice ) -> DiceChoice -> DiceChoice
-updateDiceChoice ( value, dice ) diceChoice =
-    let
-        f ( n, d ) =
-            if d == dice then
-                ( value, d )
-
-            else
-                ( n, d )
-    in
-    List.map f diceChoice
-
-
 
 -- UPDATE
 
@@ -137,6 +125,19 @@ update msg model =
             )
 
 
+updateDiceChoice : ( Int, Dice ) -> DiceChoice -> DiceChoice
+updateDiceChoice ( value, dice ) diceChoice =
+    let
+        f ( n, d ) =
+            if d == dice then
+                ( value, d )
+
+            else
+                ( n, d )
+    in
+    List.map f diceChoice
+
+
 
 -- SUBSCRIPTIONS
 
@@ -159,7 +160,7 @@ view model =
         , h2 [] [ text "Defense" ]
         , div [] (List.map (viewChosenDice False) model.defenseDices)
         , viewResult model.defenseResult
-        , input [ type_ "text", value model.textInput, onInput UserTypedText ] []
+        , input [ type_ "text", value model.textInput, onInput UserTypedText, onEnter UserPushedRollButton ] []
         , button [ onClick UserPushedRollButton ] [ text "Roll" ]
         , button [ onClick UserPushedResetButton ] [ text "Reset" ]
         , h2 [] [ text "Attack vs. Defense" ]
