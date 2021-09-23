@@ -32,7 +32,7 @@ main =
 type alias Model =
     { attackResult : Roll
     , defenseResult : Roll
-    , total : Roll
+    , attackVsDefenseResult : Roll
     , attackDices : DiceChoice
     , defenseDices : DiceChoice
     , textInput : String
@@ -43,7 +43,7 @@ init : () -> ( Model, Cmd Msg )
 init _ =
     ( { attackResult = []
       , defenseResult = []
-      , total = []
+      , attackVsDefenseResult = []
       , attackDices =
             [ ( 0, blackDice )
             , ( 0, redDice )
@@ -81,19 +81,6 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        UserTypedText value ->
-            let
-                ( attackDices, defenseDices, _ ) =
-                    parseDiceChoices value
-            in
-            ( { model
-                | attackDices = attackDices
-                , defenseDices = defenseDices
-                , textInput = value
-              }
-            , Cmd.none
-            )
-
         UserPushedRollButton ->
             ( model
             , Random.generate NewRollResult (rollDicesSet model.attackDices model.defenseDices)
@@ -106,7 +93,23 @@ update msg model =
             ( { model
                 | attackResult = attackResult
                 , defenseResult = defenseResult
-                , total = applyDefense attackResult defenseResult
+                , attackVsDefenseResult = applyDefense attackResult defenseResult
+              }
+            , Cmd.none
+            )
+
+        UserTypedText value ->
+            let
+                ( attackDices, defenseDices, _ ) =
+                    parseDiceChoices value
+            in
+            ( { model
+                | attackDices = attackDices
+                , defenseDices = defenseDices
+                , textInput = value
+                , attackResult = []
+                , defenseResult = []
+                , attackVsDefenseResult = []
               }
             , Cmd.none
             )
@@ -120,7 +123,12 @@ update msg model =
                     else
                         { model | defenseDices = updateDiceChoice ( intFromString value, dice ) model.defenseDices }
             in
-            ( { newModel | textInput = printDiceChoices ( newModel.attackDices, newModel.defenseDices ) }
+            ( { newModel
+                | textInput = printDiceChoices ( newModel.attackDices, newModel.defenseDices )
+                , attackResult = []
+                , defenseResult = []
+                , attackVsDefenseResult = []
+              }
             , Cmd.none
             )
 
@@ -161,40 +169,41 @@ view model =
                     [ div [ class "box has-background-link-light" ]
                         [ h2 [ class "title" ] [ text "Attack" ]
                         , div [] (List.map (viewChosenDice True) model.attackDices)
-                        , viewResult model.attackResult
                         ]
+                    , viewResult model.attackResult "has-background-link"
                     ]
                 , div [ class "column is-one-quarter" ]
                     [ div [ class "box has-background-primary-light" ]
                         [ h2 [ class "title" ] [ text "Defense" ]
                         , div [] (List.map (viewChosenDice False) model.defenseDices)
-                        , viewResult model.defenseResult
                         ]
+                    , viewResult model.defenseResult "has-background-primary"
                     ]
                 , div [ class "column" ]
                     [ div [ class "block box has-background-danger-light" ]
                         [ h2 [ class "title" ] [ text "Attack vs. Defense" ]
-                        , div [ class "columns" ]
-                            [ div [ class "column" ]
-                                [ input [ class "input", type_ "text", value model.textInput, onInput UserTypedText, onEnter UserPushedRollButton ] [] ]
-                            , div [ class "column is-one-fourth" ]
-                                [ button [ class "button is-danger ", onClick UserPushedRollButton ] [ text "Roll" ]
-                                , button [ class "button is-warning is-light", onClick UserPushedResetButton ] [ text "Reset" ]
-                                ]
+                        , div [ class "level" ]
+                            [ input [ class "input", type_ "text", value model.textInput, onInput UserTypedText, onEnter UserPushedRollButton ] []
+                            , button [ class "button is-danger mx-3", onClick UserPushedRollButton ] [ text "Roll" ]
+                            , button [ class "button is-success", onClick UserPushedResetButton ] [ text "Reset" ]
                             ]
-                        , viewResult model.total
                         ]
+                    , viewResult model.attackVsDefenseResult "has-background-danger"
                     ]
                 ]
             ]
         ]
 
 
-viewResult : Roll -> Html msg
-viewResult result =
-    div [ class "content" ]
-        [ h3 [ class "subtitle" ] (List.map (\f -> div [] [ text f ]) <| frequency result)
-        ]
+viewResult : Roll -> String -> Html msg
+viewResult result color =
+    if result /= [] then
+        div [ class <| "box " ++ color ]
+            [ h2 [ class "title has-text-white" ] (List.map (\f -> div [] [ text f ]) <| frequency result)
+            ]
+
+    else
+        text ""
 
 
 viewChosenDice : Bool -> ( Int, Dice ) -> Html Msg
@@ -204,11 +213,11 @@ viewChosenDice isAttack ( n, dice ) =
         , div [ class "control" ]
             [ input
                 [ class "input"
-                , type_
-                    "number"
+                , type_ "number"
                 , Html.Attributes.min "0"
                 , value <| String.fromInt n
                 , onInput (UserUpdatedDiceChoice isAttack dice)
+                , onEnter UserPushedRollButton
                 ]
                 []
             ]
