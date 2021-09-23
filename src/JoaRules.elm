@@ -12,9 +12,14 @@ applyDefense : Roll -> Roll -> Roll
 applyDefense attack defense =
     let
         ( result, _ ) =
-            ( attack, count Shield defense ) |> cancel Kill |> cancel Disrupt |> cancel Push
+            ( attack, count Shield defense )
+                |> cancel Kill
+                |> cancel Disrupt
+                |> cancel Push
     in
-    result |> filter ((/=) Shield) |> filter ((/=) Blank)
+    result
+        |> filter ((/=) Shield)
+        |> filter ((/=) Blank)
 
 
 

@@ -1,6 +1,6 @@
-module JoaDiceParser exposing (parse)
+module JoaDiceParser exposing (parseDiceChoices, printDice, printDiceChoices)
 
-import JoaDice exposing (Dice, blackDice, doomDice, giganticDice, redDice, whiteDice, yellowDice)
+import JoaDice exposing (..)
 import List exposing (foldl)
 import String exposing (contains, dropRight, right, split, toInt, toUpper)
 
@@ -9,8 +9,8 @@ import String exposing (contains, dropRight, right, split, toInt, toUpper)
 -- | parse a fight in the form : 3R Y - 2B 1W
 
 
-parse : String -> ( List ( Int, Dice ), List ( Int, Dice ), Bool )
-parse string =
+parseDiceChoices : String -> ( DiceChoice, DiceChoice, Bool )
+parseDiceChoices string =
     let
         f str ( att, def, isDef ) =
             if contains "-" str then
@@ -37,12 +37,7 @@ parse string =
 
 parseInt : String -> Int
 parseInt str =
-    case str |> dropRight 1 |> toInt of
-        Just n ->
-            n
-
-        Nothing ->
-            1
+    str |> dropRight 1 |> toInt |> Maybe.withDefault 1
 
 
 
@@ -72,3 +67,53 @@ parseDice char =
 
         _ ->
             Nothing
+
+
+printDice : Dice -> String
+printDice dice =
+    if dice == blackDice then
+        "B"
+
+    else if dice == redDice then
+        "R"
+
+    else if dice == yellowDice then
+        "Y"
+
+    else if dice == yellowDice then
+        "Y"
+
+    else if dice == whiteDice then
+        "W"
+
+    else if dice == giganticDice then
+        "G"
+
+    else if dice == doomDice then
+        "D"
+
+    else
+        ""
+
+
+printDiceChoices : ( DiceChoice, DiceChoice ) -> String
+printDiceChoices ( attackDices, defenseDices ) =
+    let
+        stringOrNoting n d =
+            if n /= 0 then
+                String.fromInt n ++ printDice d ++ " "
+
+            else
+                ""
+
+        toString =
+            List.foldl (\( n, d ) s -> s ++ stringOrNoting n d) ""
+
+        defenseOrNothing d =
+            if d /= "" then
+                "- " ++ d
+
+            else
+                ""
+    in
+    toString attackDices ++ defenseOrNothing (toString defenseDices)

@@ -26,6 +26,10 @@ type alias Dice =
     }
 
 
+type alias DiceChoice =
+    List ( Int, Dice )
+
+
 blackDice : Dice
 blackDice =
     { name = "Black dice", faces = [ Kill, Disrupt, Disrupt, Shield, Shield, Shield ] }
@@ -71,19 +75,14 @@ rolln ( n, dice ) =
     Random.list n <| roll dice
 
 
-rollDices : List ( Int, Dice ) -> Random.Generator Roll
+rollDices : DiceChoice -> Random.Generator Roll
 rollDices dices =
     List.foldr (Random.map2 (++)) (Random.constant []) <| List.map rolln dices
 
 
-rollDicesSet : List ( Int, Dice ) -> List ( Int, Dice ) -> Random.Generator ( Roll, Roll )
+rollDicesSet : DiceChoice -> DiceChoice -> Random.Generator ( Roll, Roll )
 rollDicesSet set1 set2 =
     Random.pair (rollDices set1) (rollDices set2)
-
-
-stringsFromRoll : Roll -> List String
-stringsFromRoll =
-    List.map stringFromFace
 
 
 stringFromFace : Face -> String

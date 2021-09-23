@@ -5,7 +5,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
 import JoaDice exposing (..)
-import JoaDiceParser exposing (parse)
+import JoaDiceParser exposing (parseDiceChoices, printDiceChoices)
 import JoaRules exposing (applyDefense)
 import List.Extra
 import Random
@@ -28,10 +28,6 @@ main =
 -- MODEL
 
 
-type alias DiceChoice =
-    List ( Int, Dice )
-
-
 type alias Model =
     { attackResult : Roll
     , defenseResult : Roll
@@ -48,7 +44,7 @@ init _ =
       , defenseResult = []
       , total = []
       , attackDices =
-            [ ( 1, blackDice )
+            [ ( 0, blackDice )
             , ( 0, redDice )
             , ( 0, yellowDice )
             , ( 0, whiteDice )
@@ -100,7 +96,7 @@ update msg model =
         UserTypedText value ->
             let
                 ( attackDices, defenseDices, _ ) =
-                    parse value
+                    parseDiceChoices value
             in
             ( { model
                 | attackDices = attackDices
@@ -128,19 +124,17 @@ update msg model =
             )
 
         UserUpdatedDiceChoice isAttack dice value ->
-            if isAttack then
-                ( { model
-                    | attackDices = updateDiceChoice ( intFromString value, dice ) model.attackDices
-                  }
-                , Cmd.none
-                )
+            let
+                newModel =
+                    if isAttack then
+                        { model | attackDices = updateDiceChoice ( intFromString value, dice ) model.attackDices }
 
-            else
-                ( { model
-                    | defenseDices = updateDiceChoice ( intFromString value, dice ) model.defenseDices
-                  }
-                , Cmd.none
-                )
+                    else
+                        { model | defenseDices = updateDiceChoice ( intFromString value, dice ) model.defenseDices }
+            in
+            ( { newModel | textInput = printDiceChoices ( newModel.attackDices, newModel.defenseDices ) }
+            , Cmd.none
+            )
 
 
 
@@ -207,4 +201,5 @@ frequency roll =
         |> List.map stringFromFace
         |> List.sort
         |> List.Extra.group
-        |> List.map (\( x, xs ) -> String.fromInt (List.length xs + 1) ++ " " ++ x)
+        |> List.map
+            (\( x, xs ) -> String.fromInt (List.length xs + 1) ++ " " ++ x)
