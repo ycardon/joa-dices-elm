@@ -153,37 +153,62 @@ subscriptions _ =
 
 view : Model -> Html Msg
 view model =
-    div []
-        [ h2 [] [ text "Attack" ]
-        , div [] (List.map (viewChosenDice True) model.attackDices)
-        , viewResult model.attackResult
-        , h2 [] [ text "Defense" ]
-        , div [] (List.map (viewChosenDice False) model.defenseDices)
-        , viewResult model.defenseResult
-        , input [ type_ "text", value model.textInput, onInput UserTypedText, onEnter UserPushedRollButton ] []
-        , button [ onClick UserPushedRollButton ] [ text "Roll" ]
-        , button [ onClick UserPushedResetButton ] [ text "Reset" ]
-        , h2 [] [ text "Attack vs. Defense" ]
-        , viewResult model.total
+    div [ class "container" ]
+        [ section [ class "section" ]
+            [ h1 [ class "title is-1" ] [ text "Joa Dice" ]
+            , div [ class "columns" ]
+                [ div [ class "column is-one-quarter" ]
+                    [ div [ class "box has-background-link-light" ]
+                        [ h2 [ class "title" ] [ text "Attack" ]
+                        , div [] (List.map (viewChosenDice True) model.attackDices)
+                        , viewResult model.attackResult
+                        ]
+                    ]
+                , div [ class "column is-one-quarter" ]
+                    [ div [ class "box has-background-primary-light" ]
+                        [ h2 [ class "title" ] [ text "Defense" ]
+                        , div [] (List.map (viewChosenDice False) model.defenseDices)
+                        , viewResult model.defenseResult
+                        ]
+                    ]
+                , div [ class "column" ]
+                    [ div [ class "block box has-background-danger-light" ]
+                        [ h2 [ class "title" ] [ text "Attack vs. Defense" ]
+                        , div [ class "level" ]
+                            [ input [ class "input", type_ "text", value model.textInput, onInput UserTypedText, onEnter UserPushedRollButton ] []
+                            , button [ class "button is-danger ", onClick UserPushedRollButton ] [ text "Roll" ]
+                            , button [ class "button is-warning is-light", onClick UserPushedResetButton ] [ text "Reset" ]
+                            ]
+                        , viewResult model.total
+                        ]
+                    ]
+                ]
+            ]
         ]
 
 
 viewResult : Roll -> Html msg
 viewResult result =
-    h4 [] (List.map (\f -> div [] [ text f ]) <| frequency result)
+    div [ class "content" ]
+        [ h3 [ class "subtitle" ] (List.map (\f -> div [] [ text f ]) <| frequency result)
+        ]
 
 
 viewChosenDice : Bool -> ( Int, Dice ) -> Html Msg
 viewChosenDice isAttack ( n, dice ) =
-    div []
-        [ input
-            [ type_ "number"
-            , Html.Attributes.min "0"
-            , value <| String.fromInt n
-            , onInput (UserUpdatedDiceChoice isAttack dice)
+    div [ class "field" ]
+        [ label [ class "label" ] [ text dice.name ]
+        , div [ class "control" ]
+            [ input
+                [ class "input"
+                , type_
+                    "number"
+                , Html.Attributes.min "0"
+                , value <| String.fromInt n
+                , onInput (UserUpdatedDiceChoice isAttack dice)
+                ]
+                []
             ]
-            []
-        , text dice.name
         ]
 
 
