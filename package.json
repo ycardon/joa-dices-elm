@@ -1,5 +1,21 @@
 {
+  "name": "joa-dices-elm",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.html",
   "dependencies": {
     "bulma": "^0.9.3"
-  }
+  },
+  "devDependencies": {
+    "elm-hot": "^1.1.6",
+    "node-elm-compiler": "^5.0.6",
+    "parcel-bundler": "^1.12.5"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "parcel index.html",
+    "build": "parcel build index.html"
+  },
+  "author": "Yann Cardon",
+  "license": "ISC"
 }

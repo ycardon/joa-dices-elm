@@ -161,35 +161,49 @@ subscriptions _ =
 
 view : Model -> Html Msg
 view model =
-    div [ class "container" ]
-        [ section [ class "section" ]
-            [ h1 [ class "title is-1" ] [ text "Joa Dice" ]
-            , div [ class "columns" ]
-                [ div [ class "column is-one-quarter" ]
-                    [ div [ class "box has-background-link-light" ]
-                        [ h2 [ class "title" ] [ text "Attack" ]
-                        , div [] (List.map (viewChosenDice True) model.attackDices)
-                        ]
-                    , viewResult model.attackResult "has-background-link"
+    div []
+        [ div [ class "container" ]
+            [ section [ class "section" ]
+                [ h1 [ class "title is-1" ] [ text "JoA Dice" ]
+                , h1 [ class "subtitle" ]
+                    [ text "a helper for "
+                    , a [ href "https://mythicgames.net/board-games/tol-joan-of-arc/" ] [ text "Time of Legends: Joan of Arc" ]
                     ]
-                , div [ class "column is-one-quarter" ]
-                    [ div [ class "box has-background-primary-light" ]
-                        [ h2 [ class "title" ] [ text "Defense" ]
-                        , div [] (List.map (viewChosenDice False) model.defenseDices)
-                        ]
-                    , viewResult model.defenseResult "has-background-primary"
-                    ]
-                , div [ class "column" ]
-                    [ div [ class "block box has-background-danger-light" ]
-                        [ h2 [ class "title" ] [ text "Attack vs. Defense" ]
-                        , div [ class "level" ]
-                            [ input [ class "input", type_ "text", value model.textInput, onInput UserTypedText, onEnter UserPushedRollButton ] []
-                            , button [ class "button is-danger mx-3", onClick UserPushedRollButton ] [ text "Roll" ]
-                            , button [ class "button is-success", onClick UserPushedResetButton ] [ text "Reset" ]
+                , div [ class "columns" ]
+                    [ div [ class "column" ]
+                        [ div [ class "box has-background-link-light" ]
+                            [ h2 [ class "title" ] [ text "Attack" ]
+                            , div [] (List.map (viewChosenDice True) model.attackDices)
                             ]
+                        , viewResult model.attackResult "has-background-link"
                         ]
-                    , viewResult model.attackVsDefenseResult "has-background-danger"
+                    , div [ class "column" ]
+                        [ div [ class "box has-background-primary-light" ]
+                            [ h2 [ class "title" ] [ text "Defense" ]
+                            , div [] (List.map (viewChosenDice False) model.defenseDices)
+                            ]
+                        , viewResult model.defenseResult "has-background-primary"
+                        ]
+                    , div [ class "column is-two-fifths" ]
+                        [ div [ class "block box has-background-danger-light" ]
+                            [ h2 [ class "title" ] [ text "Attack vs. Defense" ]
+                            , div [ class "level" ]
+                                [ input [ class "input", type_ "text", value model.textInput, onInput UserTypedText, onEnter UserPushedRollButton ] []
+                                , button [ class "button is-danger mx-3", onClick UserPushedRollButton ] [ text "Roll" ]
+                                , button [ class "button is-success", onClick UserPushedResetButton ] [ text "Reset" ]
+                                ]
+                            ]
+                        , viewResult model.attackVsDefenseResult "has-background-danger"
+                        ]
                     ]
+                ]
+            ]
+        , footer [ class "footer" ]
+            [ div [ class "content has-text-centered" ]
+                [ text <| "made with " ++ heart ++ ", "
+                , a [ href "https://elm-lang.org" ] [ text "elm" ]
+                , text " and "
+                , a [ href "https://bulma.io" ] [ text "bulma" ]
                 ]
             ]
         ]
@@ -241,3 +255,7 @@ frequency roll =
         |> List.Extra.group
         |> List.map
             (\( x, xs ) -> String.fromInt (List.length xs + 1) ++ " " ++ x)
+
+
+heart =
+    String.fromChar (Char.fromCode 10084)
