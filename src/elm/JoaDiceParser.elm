@@ -119,7 +119,3 @@ encodeDice dice =
 
     else
         ""
-
-
-
--- | pretty print a face

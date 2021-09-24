@@ -216,8 +216,7 @@ viewControlsAndResults model =
                     []
                 , button [ class "button is-danger mx-3 is-hidden-mobile", onClick UserPushedRollButton ]
                     [ text "Roll" ]
-                , button
-                    [ class "button is-success is-hidden-mobile", onClick UserPushedResetButton ]
+                , button [ class "button is-success is-hidden-mobile", onClick UserPushedResetButton ]
                     [ text "Reset" ]
                 ]
             ]
@@ -246,18 +245,18 @@ viewAttackOrDefense model isAttack =
     div [ class "column" ]
         [ div [ class <| "box is-hidden-mobile " ++ x.color ++ "-light" ]
             [ h2 [ class "title" ] [ text x.name ]
-            , div [] (List.map (viewChosenDiceSelector True) x.diceChoice)
+            , div [] (List.map (viewChosenDiceSelector isAttack) x.diceChoice)
             ]
-        , viewResult model.attackState x.result False x.color
+        , viewResult model.attackState x.result isAttack x.color
         ]
 
 
 viewResult : AttackState -> Roll -> Bool -> String -> Html msg
-viewResult attackState result isAttackVsDefense color =
-    if attackState /= NoAttack && (result /= [] || isAttackVsDefense) then
+viewResult attackState result isControlsAndResultsView color =
+    if attackState /= NoAttack && (result /= [] || isControlsAndResultsView) then
         div [ class <| "box " ++ color ]
             [ h2 [ class "title has-text-white" ]
-                (if attackState == AttackFailed && isAttackVsDefense then
+                (if attackState == AttackFailed && isControlsAndResultsView then
                     [ text "Attack failed" ]
 
                  else
