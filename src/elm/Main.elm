@@ -204,20 +204,26 @@ viewControlsAndResults model =
     div [ class "column is-two-fifths" ]
         [ div [ class "block box has-background-danger-light" ]
             [ h2 [ class "title is-hidden-mobile" ] [ text "Attack vs. Defense" ]
-            , div [ class "level" ]
-                [ input
-                    [ class "input"
-                    , type_ "text"
-                    , value model.textInput
-                    , placeholder "2B R - 3W"
-                    , onInput UserTypedText
-                    , onEnter UserPushedRollButton
+            , div [ class "field has-addons" ]
+                [ p [ class "control is-expanded" ]
+                    [ input
+                        [ class "input"
+                        , type_ "text"
+                        , value model.textInput
+                        , placeholder "2B R - 3W"
+                        , onInput UserTypedText
+                        , onEnter UserPushedRollButton
+                        ]
+                        []
                     ]
-                    []
-                , button [ class "button is-danger mx-3 is-hidden-mobile", onClick UserPushedRollButton ]
-                    [ text "Roll" ]
-                , button [ class "button is-success is-hidden-mobile", onClick UserPushedResetButton ]
-                    [ text "Reset" ]
+                , p [ class "control is-hidden-mobile" ]
+                    [ button [ class "button has-background-light", onClick UserPushedResetButton ]
+                        [ text "Reset" ]
+                    ]
+                , p [ class "control" ]
+                    [ button [ class "button is-rounded is-danger", onClick UserPushedRollButton ]
+                        [ text "Roll" ]
+                    ]
                 ]
             ]
         , viewResult model.attackState model.attackVsDefenseResult True "has-background-danger"
@@ -247,7 +253,7 @@ viewAttackOrDefense model isAttack =
             [ h2 [ class "title" ] [ text x.name ]
             , div [] (List.map (viewChosenDiceSelector isAttack) x.diceChoice)
             ]
-        , viewResult model.attackState x.result isAttack x.color
+        , viewResult model.attackState x.result False x.color
         ]
 
 
@@ -272,7 +278,7 @@ viewChosenDiceSelector : Bool -> ( Int, Dice ) -> Html Msg
 viewChosenDiceSelector isAttack ( n, dice ) =
     div [ class "field" ]
         [ label [ class "label" ] [ text dice.name ]
-        , div [ class "control" ]
+        , div [ class "control has-icons-left" ]
             [ input
                 [ class "input"
                 , type_ "number"
@@ -282,7 +288,9 @@ viewChosenDiceSelector isAttack ( n, dice ) =
                 , onEnter UserPushedRollButton
                 ]
                 []
+            , span [ class "icon is-left" ] [ i [ class <| fontAwesome n ] [] ]
             ]
+        , p [ class "help" ] [ text <| printDice dice ]
         ]
 
 
@@ -365,3 +373,36 @@ printFace face =
 
         Empty ->
             "Empty"
+
+
+printDice : Dice -> String
+printDice dice =
+    List.foldl (\f s -> s ++ printFace f ++ " ") "" dice.faces
+
+
+fontAwesome : Int -> String
+fontAwesome n =
+    case n of
+        0 ->
+            "fas fa-ellipsis-h"
+
+        1 ->
+            "fas fa-dice-one"
+
+        2 ->
+            "fas fa-dice-two"
+
+        3 ->
+            "fas fa-dice-three"
+
+        4 ->
+            "fas fa-dice-four"
+
+        5 ->
+            "fas fa-dice-five"
+
+        6 ->
+            "fas fa-dice-six"
+
+        _ ->
+            "fas fa-dice"
