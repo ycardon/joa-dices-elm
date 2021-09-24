@@ -1,4 +1,4 @@
-module Main exposing (main)
+module Main exposing (main, printRoll)
 
 import Browser
 import Html exposing (..)
@@ -164,81 +164,83 @@ subscriptions _ =
 view : Model -> Html Msg
 view model =
     div []
-        [ div [ class "container" ]
-            [ section [ class "section" ]
-                [ h1 [ class "title is-1" ] [ text "JoA Dice" ]
-                , h1 [ class "subtitle" ]
-                    [ text "a helper for "
-                    , a [ href "https://mythicgames.net/board-games/tol-joan-of-arc/" ] [ text "Time of Legends: Joan of Arc" ]
-                    ]
+        [ section [ class "section" ]
+            [ div [ class "container" ]
+                [ viewHeader ()
                 , div [ class "columns" ]
-                    [ div [ class "column" ]
-                        [ div [ class "box has-background-link-light" ]
-                            [ h2 [ class "title" ] [ text "Attack" ]
-                            , div [] (List.map (viewChosenDice True) model.attackDices)
-                            ]
-                        , viewResult model.attackResult "has-background-link"
-                        ]
-                    , div [ class "column" ]
-                        [ div [ class "box has-background-primary-light" ]
-                            [ h2 [ class "title" ] [ text "Defense" ]
-                            , div [] (List.map (viewChosenDice False) model.defenseDices)
-                            ]
-                        , viewResult model.defenseResult "has-background-primary"
-                        ]
-                    , div [ class "column is-two-fifths" ]
+                    [ div [ class "column is-two-fifths" ]
                         [ div [ class "block box has-background-danger-light" ]
-                            [ h2 [ class "title" ] [ text "Attack vs. Defense" ]
+                            [ h2 [ class "title is-hidden-mobile" ] [ text "Attack vs. Defense" ]
                             , div [ class "level" ]
                                 [ input
                                     [ class "input"
                                     , type_ "text"
                                     , value model.textInput
+                                    , placeholder "2B R - 3W"
                                     , onInput UserTypedText
                                     , onEnter UserPushedRollButton
                                     ]
                                     []
                                 , button
-                                    [ class "button is-danger mx-3"
+                                    [ class "button is-danger mx-3 is-hidden-mobile"
                                     , onClick UserPushedRollButton
                                     ]
                                     [ text "Roll" ]
                                 , button
-                                    [ class "button is-success"
+                                    [ class "button is-success is-hidden-mobile"
                                     , onClick UserPushedResetButton
                                     ]
                                     [ text "Reset" ]
                                 ]
                             ]
-                        , viewResult model.attackVsDefenseResult "has-background-danger"
+                        , if model.attackResult /= [] then
+                            viewResult model.attackVsDefenseResult True "has-background-danger"
+
+                          else
+                            text ""
+                        ]
+                    , div [ class "column" ]
+                        [ div [ class "box has-background-link-light is-hidden-mobile" ]
+                            [ h2 [ class "title" ] [ text "Attack" ]
+                            , div [] (List.map (viewChosenDiceSelector True) model.attackDices)
+                            ]
+                        , viewResult model.attackResult False "has-background-link"
+                        ]
+                    , div [ class "column" ]
+                        [ div [ class "box has-background-primary-light is-hidden-mobile" ]
+                            [ h2 [ class "title" ] [ text "Defense" ]
+                            , div [] (List.map (viewChosenDiceSelector False) model.defenseDices)
+                            ]
+                        , viewResult model.defenseResult False "has-background-primary"
                         ]
                     ]
                 ]
             ]
-        , footer [ class "footer" ]
-            [ div [ class "content has-text-centered" ]
-                [ text <| "made with " ++ heartString ++ ", "
-                , a [ href "https://elm-lang.org" ] [ text "elm" ]
-                , text " and "
-                , a [ href "https://bulma.io" ] [ text "bulma" ]
-                ]
-            ]
+        , viewFooter ()
         ]
 
 
-viewResult : Roll -> String -> Html msg
-viewResult result color =
-    if result /= [] then
+viewResult : Roll -> Bool -> String -> Html msg
+viewResult result isAttackVsDefense color =
+    let
+        filledResult =
+            if result == [] && isAttackVsDefense then
+                [ text "Attack failed" ]
+
+            else
+                List.map (\f -> div [] [ text f ]) <| printRoll result
+    in
+    if filledResult /= [] then
         div [ class <| "box " ++ color ]
-            [ h2 [ class "title has-text-white" ] (List.map (\f -> div [] [ text f ]) <| printRoll result)
+            [ h2 [ class "title has-text-white" ] filledResult
             ]
 
     else
         text ""
 
 
-viewChosenDice : Bool -> ( Int, Dice ) -> Html Msg
-viewChosenDice isAttack ( n, dice ) =
+viewChosenDiceSelector : Bool -> ( Int, Dice ) -> Html Msg
+viewChosenDiceSelector isAttack ( n, dice ) =
     div [ class "field" ]
         [ label [ class "label" ] [ text dice.name ]
         , div [ class "control" ]
@@ -251,6 +253,29 @@ viewChosenDice isAttack ( n, dice ) =
                 , onEnter UserPushedRollButton
                 ]
                 []
+            ]
+        ]
+
+
+viewHeader : () -> Html msg
+viewHeader () =
+    div [ class "block" ]
+        [ h1 [ class "title is-1" ] [ text "JoA Dice" ]
+        , h1 [ class "subtitle is-hidden-mobile" ]
+            [ text "a helper for "
+            , a [ href "https://mythicgames.net/board-games/tol-joan-of-arc/" ] [ text "Time of Legends: Joan of Arc" ]
+            ]
+        ]
+
+
+viewFooter : () -> Html msg
+viewFooter () =
+    footer [ class "footer is-hidden-mobile" ]
+        [ div [ class "content has-text-centered" ]
+            [ text <| "made with " ++ heartString ++ ", "
+            , a [ href "https://elm-lang.org" ] [ text "elm" ]
+            , text " and "
+            , a [ href "https://bulma.io" ] [ text "bulma" ]
             ]
         ]
 

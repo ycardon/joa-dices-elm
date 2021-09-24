@@ -2,8 +2,6 @@
   "name": "joa-dices-elm",
   "version": "1.0.0",
   "description": "",
-  "dependencies": {
-  },
   "devDependencies": {
     "elm-hot": "^1.1.6",
     "node-elm-compiler": "^5.0.6",
