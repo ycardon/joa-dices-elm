@@ -189,51 +189,66 @@ view model =
             [ div [ class "container" ]
                 [ viewHeader ()
                 , div [ class "columns" ]
-                    [ div [ class "column is-two-fifths" ]
-                        [ div [ class "block box has-background-danger-light" ]
-                            [ h2 [ class "title is-hidden-mobile" ] [ text "Attack vs. Defense" ]
-                            , div [ class "level" ]
-                                [ input
-                                    [ class "input"
-                                    , type_ "text"
-                                    , value model.textInput
-                                    , placeholder "2B R - 3W"
-                                    , onInput UserTypedText
-                                    , onEnter UserPushedRollButton
-                                    ]
-                                    []
-                                , button
-                                    [ class "button is-danger mx-3 is-hidden-mobile"
-                                    , onClick UserPushedRollButton
-                                    ]
-                                    [ text "Roll" ]
-                                , button
-                                    [ class "button is-success is-hidden-mobile"
-                                    , onClick UserPushedResetButton
-                                    ]
-                                    [ text "Reset" ]
-                                ]
-                            ]
-                        , viewResult model.attackState model.attackVsDefenseResult True "has-background-danger"
-                        ]
-                    , div [ class "column" ]
-                        [ div [ class "box has-background-link-light is-hidden-mobile" ]
-                            [ h2 [ class "title" ] [ text "Attack" ]
-                            , div [] (List.map (viewChosenDiceSelector True) model.attackDices)
-                            ]
-                        , viewResult model.attackState model.attackResult False "has-background-link"
-                        ]
-                    , div [ class "column" ]
-                        [ div [ class "box has-background-primary-light is-hidden-mobile" ]
-                            [ h2 [ class "title" ] [ text "Defense" ]
-                            , div [] (List.map (viewChosenDiceSelector False) model.defenseDices)
-                            ]
-                        , viewResult model.attackState model.defenseResult False "has-background-primary"
-                        ]
+                    [ viewControlsAndResults model
+                    , viewAttackOrDefense model True
+                    , viewAttackOrDefense model False
                     ]
                 ]
             ]
         , viewFooter ()
+        ]
+
+
+viewControlsAndResults : Model -> Html Msg
+viewControlsAndResults model =
+    div [ class "column is-two-fifths" ]
+        [ div [ class "block box has-background-danger-light" ]
+            [ h2 [ class "title is-hidden-mobile" ] [ text "Attack vs. Defense" ]
+            , div [ class "level" ]
+                [ input
+                    [ class "input"
+                    , type_ "text"
+                    , value model.textInput
+                    , placeholder "2B R - 3W"
+                    , onInput UserTypedText
+                    , onEnter UserPushedRollButton
+                    ]
+                    []
+                , button [ class "button is-danger mx-3 is-hidden-mobile", onClick UserPushedRollButton ]
+                    [ text "Roll" ]
+                , button
+                    [ class "button is-success is-hidden-mobile", onClick UserPushedResetButton ]
+                    [ text "Reset" ]
+                ]
+            ]
+        , viewResult model.attackState model.attackVsDefenseResult True "has-background-danger"
+        ]
+
+
+viewAttackOrDefense : Model -> Bool -> Html Msg
+viewAttackOrDefense model isAttack =
+    let
+        x =
+            if isAttack then
+                { diceChoice = model.attackDices
+                , result = model.attackResult
+                , name = "Attack"
+                , color = "has-background-link"
+                }
+
+            else
+                { diceChoice = model.defenseDices
+                , result = model.defenseResult
+                , name = "Defense"
+                , color = "has-background-primary"
+                }
+    in
+    div [ class "column" ]
+        [ div [ class <| "box is-hidden-mobile " ++ x.color ++ "-light" ]
+            [ h2 [ class "title" ] [ text x.name ]
+            , div [] (List.map (viewChosenDiceSelector True) x.diceChoice)
+            ]
+        , viewResult model.attackState x.result False x.color
         ]
 
 
@@ -278,7 +293,8 @@ viewHeader () =
         [ h1 [ class "title is-1" ] [ text "JoA Dice" ]
         , h1 [ class "subtitle is-hidden-mobile" ]
             [ text "a helper for "
-            , a [ href "https://mythicgames.net/board-games/tol-joan-of-arc/" ] [ text "Time of Legends: Joan of Arc" ]
+            , a [ href "https://mythicgames.net/board-games/tol-joan-of-arc/" ]
+                [ text "Time of Legends: Joan of Arc" ]
             ]
         ]
 
