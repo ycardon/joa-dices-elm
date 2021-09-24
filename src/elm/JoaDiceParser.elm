@@ -1,7 +1,6 @@
 module JoaDiceParser exposing
     ( decodeDiceChoices
-    , encodeChoices
-    , encodeDice
+    , encodeDiceChoices
     )
 
 import JoaDice exposing (..)
@@ -69,8 +68,8 @@ decodeDice char =
 -- ENCODERS
 
 
-encodeChoices : ( DiceChoice, DiceChoice ) -> String
-encodeChoices ( attackDices, defenseDices ) =
+encodeDiceChoices : ( DiceChoice, DiceChoice ) -> String
+encodeDiceChoices ( attackDices, defenseDices ) =
     let
         stringOrNoting n d =
             if n <= 0 then

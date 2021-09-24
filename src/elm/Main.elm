@@ -6,7 +6,7 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
 import Html.Events.Extra exposing (onEnter)
 import JoaDice exposing (..)
-import JoaDiceParser exposing (decodeDiceChoices, encodeChoices)
+import JoaDiceParser exposing (decodeDiceChoices, encodeDiceChoices)
 import List.Extra
 import Random
 
@@ -28,6 +28,12 @@ main =
 -- MODEL
 
 
+type AttackState
+    = AttackSucceeded
+    | AttackFailed
+    | NoAttack
+
+
 type alias Model =
     { attackResult : Roll
     , defenseResult : Roll
@@ -35,6 +41,7 @@ type alias Model =
     , attackDices : DiceChoice
     , defenseDices : DiceChoice
     , textInput : String
+    , attackState : AttackState
     }
 
 
@@ -60,6 +67,7 @@ init _ =
             , ( 0, doomDice )
             ]
       , textInput = ""
+      , attackState = NoAttack
       }
     , Cmd.none
     )
@@ -89,10 +97,22 @@ update msg model =
             init ()
 
         NewRollResult ( attackResult, defenseResult ) ->
+            let
+                attackVsDefenseResult =
+                    applyDefense attackResult defenseResult
+
+                attackState =
+                    if attackVsDefenseResult == [] then
+                        AttackFailed
+
+                    else
+                        AttackSucceeded
+            in
             ( { model
                 | attackResult = attackResult
                 , defenseResult = defenseResult
-                , attackVsDefenseResult = applyDefense attackResult defenseResult
+                , attackVsDefenseResult = attackVsDefenseResult
+                , attackState = attackState
               }
             , Cmd.none
             )
@@ -121,7 +141,7 @@ update msg model =
                         { model | defenseDices = updateDiceChoice ( intFromString value, dice ) model.defenseDices }
             in
             ( resetResult
-                { newModel | textInput = encodeChoices ( newModel.attackDices, newModel.defenseDices ) }
+                { newModel | textInput = encodeDiceChoices ( newModel.attackDices, newModel.defenseDices ) }
             , Cmd.none
             )
 
@@ -145,6 +165,7 @@ resetResult model =
         | attackResult = []
         , defenseResult = []
         , attackVsDefenseResult = []
+        , attackState = NoAttack
     }
 
 
@@ -193,25 +214,21 @@ view model =
                                     [ text "Reset" ]
                                 ]
                             ]
-                        , if model.attackResult /= [] then
-                            viewResult model.attackVsDefenseResult True "has-background-danger"
-
-                          else
-                            text ""
+                        , viewResult model.attackState model.attackVsDefenseResult True "has-background-danger"
                         ]
                     , div [ class "column" ]
                         [ div [ class "box has-background-link-light is-hidden-mobile" ]
                             [ h2 [ class "title" ] [ text "Attack" ]
                             , div [] (List.map (viewChosenDiceSelector True) model.attackDices)
                             ]
-                        , viewResult model.attackResult False "has-background-link"
+                        , viewResult model.attackState model.attackResult False "has-background-link"
                         ]
                     , div [ class "column" ]
                         [ div [ class "box has-background-primary-light is-hidden-mobile" ]
                             [ h2 [ class "title" ] [ text "Defense" ]
                             , div [] (List.map (viewChosenDiceSelector False) model.defenseDices)
                             ]
-                        , viewResult model.defenseResult False "has-background-primary"
+                        , viewResult model.attackState model.defenseResult False "has-background-primary"
                         ]
                     ]
                 ]
@@ -220,19 +237,17 @@ view model =
         ]
 
 
-viewResult : Roll -> Bool -> String -> Html msg
-viewResult result isAttackVsDefense color =
-    let
-        filledResult =
-            if result == [] && isAttackVsDefense then
-                [ text "Attack failed" ]
-
-            else
-                List.map (\f -> div [] [ text f ]) <| printRoll result
-    in
-    if filledResult /= [] then
+viewResult : AttackState -> Roll -> Bool -> String -> Html msg
+viewResult attackState result isAttackVsDefense color =
+    if attackState /= NoAttack && (result /= [] || isAttackVsDefense) then
         div [ class <| "box " ++ color ]
-            [ h2 [ class "title has-text-white" ] filledResult
+            [ h2 [ class "title has-text-white" ]
+                (if attackState == AttackFailed && isAttackVsDefense then
+                    [ text "Attack failed" ]
+
+                 else
+                    List.map (\f -> div [] [ text f ]) <| printRoll result
+                )
             ]
 
     else
