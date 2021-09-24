@@ -2,9 +2,7 @@
   "name": "joa-dices-elm",
   "version": "1.0.0",
   "description": "",
-  "main": "index.html",
   "dependencies": {
-    "bulma": "^0.9.3"
   },
   "devDependencies": {
     "elm-hot": "^1.1.6",
@@ -13,8 +11,9 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "parcel index.html",
-    "build": "parcel build index.html"
+    "dev": "parcel src/static/index.html",
+    "build": "rm -fr dist/ && parcel build src/static/index.html --no-source-maps",
+    "clean": "rm -fr elm-stuff/ node_modules/ .cache/ dist/"
   },
   "author": "Yann Cardon",
   "license": "ISC"

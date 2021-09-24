@@ -6,8 +6,7 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
 import Html.Events.Extra exposing (onEnter)
 import JoaDice exposing (..)
-import JoaDiceParser exposing (parseDiceChoices, printDiceChoices)
-import JoaRules exposing (applyDefense)
+import JoaDiceParser exposing (decodeDiceChoices, encodeChoices)
 import List.Extra
 import Random
 
@@ -101,16 +100,14 @@ update msg model =
         UserTypedText value ->
             let
                 ( attackDices, defenseDices, _ ) =
-                    parseDiceChoices value
+                    decodeDiceChoices value
             in
-            ( { model
-                | attackDices = attackDices
-                , defenseDices = defenseDices
-                , textInput = value
-                , attackResult = []
-                , defenseResult = []
-                , attackVsDefenseResult = []
-              }
+            ( resetResult
+                { model
+                    | attackDices = attackDices
+                    , defenseDices = defenseDices
+                    , textInput = value
+                }
             , Cmd.none
             )
 
@@ -123,12 +120,8 @@ update msg model =
                     else
                         { model | defenseDices = updateDiceChoice ( intFromString value, dice ) model.defenseDices }
             in
-            ( { newModel
-                | textInput = printDiceChoices ( newModel.attackDices, newModel.defenseDices )
-                , attackResult = []
-                , defenseResult = []
-                , attackVsDefenseResult = []
-              }
+            ( resetResult
+                { newModel | textInput = encodeChoices ( newModel.attackDices, newModel.defenseDices ) }
             , Cmd.none
             )
 
@@ -144,6 +137,15 @@ updateDiceChoice ( value, dice ) diceChoice =
                 ( n, d )
     in
     List.map f diceChoice
+
+
+resetResult : Model -> Model
+resetResult model =
+    { model
+        | attackResult = []
+        , defenseResult = []
+        , attackVsDefenseResult = []
+    }
 
 
 
@@ -188,9 +190,24 @@ view model =
                         [ div [ class "block box has-background-danger-light" ]
                             [ h2 [ class "title" ] [ text "Attack vs. Defense" ]
                             , div [ class "level" ]
-                                [ input [ class "input", type_ "text", value model.textInput, onInput UserTypedText, onEnter UserPushedRollButton ] []
-                                , button [ class "button is-danger mx-3", onClick UserPushedRollButton ] [ text "Roll" ]
-                                , button [ class "button is-success", onClick UserPushedResetButton ] [ text "Reset" ]
+                                [ input
+                                    [ class "input"
+                                    , type_ "text"
+                                    , value model.textInput
+                                    , onInput UserTypedText
+                                    , onEnter UserPushedRollButton
+                                    ]
+                                    []
+                                , button
+                                    [ class "button is-danger mx-3"
+                                    , onClick UserPushedRollButton
+                                    ]
+                                    [ text "Roll" ]
+                                , button
+                                    [ class "button is-success"
+                                    , onClick UserPushedResetButton
+                                    ]
+                                    [ text "Reset" ]
                                 ]
                             ]
                         , viewResult model.attackVsDefenseResult "has-background-danger"
@@ -200,7 +217,7 @@ view model =
             ]
         , footer [ class "footer" ]
             [ div [ class "content has-text-centered" ]
-                [ text <| "made with " ++ heart ++ ", "
+                [ text <| "made with " ++ heartString ++ ", "
                 , a [ href "https://elm-lang.org" ] [ text "elm" ]
                 , text " and "
                 , a [ href "https://bulma.io" ] [ text "bulma" ]
@@ -213,7 +230,7 @@ viewResult : Roll -> String -> Html msg
 viewResult result color =
     if result /= [] then
         div [ class <| "box " ++ color ]
-            [ h2 [ class "title has-text-white" ] (List.map (\f -> div [] [ text f ]) <| frequency result)
+            [ h2 [ class "title has-text-white" ] (List.map (\f -> div [] [ text f ]) <| printRoll result)
             ]
 
     else
@@ -247,15 +264,49 @@ intFromString value =
     Maybe.withDefault 0 (String.toInt value)
 
 
-frequency : Roll -> List String
-frequency roll =
+heartString =
+    String.fromChar (Char.fromCode 10084)
+
+
+printRoll : Roll -> List String
+printRoll roll =
     roll
-        |> List.map stringFromFace
+        |> List.map printFace
         |> List.sort
         |> List.Extra.group
         |> List.map
             (\( x, xs ) -> String.fromInt (List.length xs + 1) ++ " " ++ x)
 
 
-heart =
-    String.fromChar (Char.fromCode 10084)
+printFace : Face -> String
+printFace face =
+    case face of
+        Kill ->
+            "Kill"
+
+        Disrupt ->
+            "Disrupt"
+
+        Push ->
+            "Push"
+
+        Shield ->
+            "Shield"
+
+        Blank ->
+            "Blank"
+
+        Trample ->
+            "Trample"
+
+        Death ->
+            "Death"
+
+        Rally ->
+            "Rally"
+
+        DelayedRally ->
+            "DelayedRally"
+
+        Empty ->
+            "Empty"
