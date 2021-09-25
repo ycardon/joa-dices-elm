@@ -12,6 +12,18 @@ import Random
 
 
 
+-- CONFIG
+
+
+enableColoredLabel =
+    True
+
+
+enableHideGiganticAndDoomDice =
+    True
+
+
+
 -- MAIN
 
 
@@ -50,27 +62,32 @@ init _ =
     ( { attackResult = []
       , defenseResult = []
       , attackVsDefenseResult = []
-      , attackDices =
-            [ ( 0, blackDice )
-            , ( 0, redDice )
-            , ( 0, yellowDice )
-            , ( 0, whiteDice )
-            , ( 0, giganticDice )
-            , ( 0, doomDice )
-            ]
-      , defenseDices =
-            [ ( 0, blackDice )
-            , ( 0, redDice )
-            , ( 0, yellowDice )
-            , ( 0, whiteDice )
-            , ( 0, giganticDice )
-            , ( 0, doomDice )
-            ]
+      , attackDices = initialDiceChoice
+      , defenseDices = initialDiceChoice
       , textInput = ""
       , attackState = NoAttack
       }
     , Cmd.none
     )
+
+
+initialDiceChoice : DiceChoice
+initialDiceChoice =
+    if enableHideGiganticAndDoomDice then
+        [ ( 0, blackDice )
+        , ( 0, redDice )
+        , ( 0, yellowDice )
+        , ( 0, whiteDice )
+        ]
+
+    else
+        [ ( 0, blackDice )
+        , ( 0, redDice )
+        , ( 0, yellowDice )
+        , ( 0, whiteDice )
+        , ( 0, giganticDice )
+        , ( 0, doomDice )
+        ]
 
 
 
@@ -277,8 +294,8 @@ viewResult attackState result isControlsAndResultsView color =
 viewChosenDiceSelector : Bool -> ( Int, Dice ) -> Html Msg
 viewChosenDiceSelector isAttack ( n, dice ) =
     div [ class "field" ]
-        [ label [ class "label" ] [ text dice.name ]
-        , div [ class "control has-icons-left" ]
+        [ coloredDiceLabel enableColoredLabel ( n, dice )
+        , div [ class "control" ]
             [ input
                 [ class "input"
                 , type_ "number"
@@ -288,10 +305,26 @@ viewChosenDiceSelector isAttack ( n, dice ) =
                 , onEnter UserPushedRollButton
                 ]
                 []
-            , span [ class "icon is-left" ] [ i [ class <| fontAwesome n ] [] ]
             ]
         , p [ class "help" ] [ text <| printDice dice ]
         ]
+
+
+coloredDiceLabel : Bool -> ( Int, Dice ) -> Html msg
+coloredDiceLabel isEnabled ( n, dice ) =
+    if isEnabled then
+        label [ class "label" ]
+            [ i
+                [ class <| fontAwesome n
+                , style "color" dice.color
+                , style "text-shadow" "-2px 2px 4px Silver, 2px -2px 0 White"
+                ]
+                []
+            , text <| " " ++ dice.name
+            ]
+
+    else
+        label [ class "label" ] [ text <| dice.name ]
 
 
 viewHeader : () -> Html msg
@@ -384,7 +417,7 @@ fontAwesome : Int -> String
 fontAwesome n =
     case n of
         0 ->
-            "fas fa-ellipsis-h"
+            ""
 
         1 ->
             "fas fa-dice-one"
