@@ -15,12 +15,10 @@ import Random
 -- CONFIG
 
 
-enableColoredLabel =
-    True
-
-
-enableHideGiganticAndDoomDice =
-    True
+config =
+    { enableColoredLabel = True
+    , enableHideGiganticAndDoomDice = True
+    }
 
 
 
@@ -47,24 +45,24 @@ type AttackState
 
 
 type alias Model =
-    { attackResult : Roll
-    , defenseResult : Roll
-    , attackVsDefenseResult : Roll
-    , attackDices : DiceChoice
+    { attackDices : DiceChoice
     , defenseDices : DiceChoice
     , textInput : String
+    , attackResult : Roll
+    , defenseResult : Roll
+    , finalResult : Roll
     , attackState : AttackState
     }
 
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( { attackResult = []
-      , defenseResult = []
-      , attackVsDefenseResult = []
-      , attackDices = initialDiceChoice
+    ( { attackDices = initialDiceChoice
       , defenseDices = initialDiceChoice
       , textInput = ""
+      , attackResult = []
+      , defenseResult = []
+      , finalResult = []
       , attackState = NoAttack
       }
     , Cmd.none
@@ -73,7 +71,7 @@ init _ =
 
 initialDiceChoice : DiceChoice
 initialDiceChoice =
-    if enableHideGiganticAndDoomDice then
+    if config.enableHideGiganticAndDoomDice then
         [ ( 0, blackDice )
         , ( 0, redDice )
         , ( 0, yellowDice )
@@ -128,7 +126,7 @@ update msg model =
             ( { model
                 | attackResult = attackResult
                 , defenseResult = defenseResult
-                , attackVsDefenseResult = attackVsDefenseResult
+                , finalResult = attackVsDefenseResult
                 , attackState = attackState
               }
             , Cmd.none
@@ -181,7 +179,7 @@ resetResult model =
     { model
         | attackResult = []
         , defenseResult = []
-        , attackVsDefenseResult = []
+        , finalResult = []
         , attackState = NoAttack
     }
 
@@ -206,9 +204,9 @@ view model =
             [ div [ class "container" ]
                 [ viewHeader ()
                 , div [ class "columns" ]
-                    [ viewControlsAndResults model
-                    , viewAttackOrDefense model True
-                    , viewAttackOrDefense model False
+                    [ viewTextInputAndFinalResultSection model
+                    , viewDiceSelectionAndResultSection model True
+                    , viewDiceSelectionAndResultSection model False
                     ]
                 ]
             ]
@@ -216,8 +214,8 @@ view model =
         ]
 
 
-viewControlsAndResults : Model -> Html Msg
-viewControlsAndResults model =
+viewTextInputAndFinalResultSection : Model -> Html Msg
+viewTextInputAndFinalResultSection model =
     div [ class "column is-two-fifths" ]
         [ div [ class "block box has-background-danger-light" ]
             [ h2 [ class "title is-hidden-mobile" ] [ text "Attack vs. Defense" ]
@@ -243,12 +241,12 @@ viewControlsAndResults model =
                     ]
                 ]
             ]
-        , viewResult model.attackState model.attackVsDefenseResult True "has-background-danger"
+        , viewResult model.attackState model.finalResult True "has-background-danger"
         ]
 
 
-viewAttackOrDefense : Model -> Bool -> Html Msg
-viewAttackOrDefense model isAttack =
+viewDiceSelectionAndResultSection : Model -> Bool -> Html Msg
+viewDiceSelectionAndResultSection model isAttack =
     let
         x =
             if isAttack then
@@ -275,11 +273,11 @@ viewAttackOrDefense model isAttack =
 
 
 viewResult : AttackState -> Roll -> Bool -> String -> Html msg
-viewResult attackState result isControlsAndResultsView color =
-    if attackState /= NoAttack && (result /= [] || isControlsAndResultsView) then
+viewResult attackState result isTextInputAndFinalResultSection color =
+    if attackState /= NoAttack && (result /= [] || isTextInputAndFinalResultSection) then
         div [ class <| "box " ++ color ]
             [ h2 [ class "title has-text-white" ]
-                (if attackState == AttackFailed && isControlsAndResultsView then
+                (if attackState == AttackFailed && isTextInputAndFinalResultSection then
                     [ text "Attack failed" ]
 
                  else
@@ -294,7 +292,7 @@ viewResult attackState result isControlsAndResultsView color =
 viewChosenDiceSelector : Bool -> ( Int, Dice ) -> Html Msg
 viewChosenDiceSelector isAttack ( n, dice ) =
     div [ class "field" ]
-        [ coloredDiceLabel enableColoredLabel ( n, dice )
+        [ coloredDiceLabel config.enableHideGiganticAndDoomDice ( n, dice )
         , div [ class "control" ]
             [ input
                 [ class "input"
