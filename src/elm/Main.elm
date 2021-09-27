@@ -345,6 +345,10 @@ viewFooter () =
             , a [ href "https://elm-lang.org" ] [ text "elm" ]
             , text " and "
             , a [ href "https://bulma.io" ] [ text "bulma" ]
+            , p []
+                [ a [ href "https://github.com/topics/joa-dices-rewrite" ] [ text "joa-dices-rewrite" ]
+                , text " collection 2021"
+                ]
             ]
         ]
 
