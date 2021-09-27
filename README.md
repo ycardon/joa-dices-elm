@@ -1,6 +1,6 @@
 # joa-dices-elm
 Rewrite of the TypeScript project [JoA Dice](https://github.com/ycardon/joa-dices) in Elm
-- single page application ([elm]("https://elm-lang.org))
+- single page application ([elm](https://elm-lang.org))
 - responsive ([bulma](https://bulma.io))
 
 Test it [here](https://ycardon.github.io)
