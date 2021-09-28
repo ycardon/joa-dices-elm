@@ -18,6 +18,7 @@ import Random
 config =
     { enableColoredLabel = True
     , enableHideGiganticAndDoomDice = True
+    , enableAddMissingDiceChoice = True
     }
 
 
@@ -88,6 +89,38 @@ initialDiceChoice =
         ]
 
 
+addMissingDiceChoice : DiceChoice -> DiceChoice
+addMissingDiceChoice diceChoice =
+    if config.enableAddMissingDiceChoice then
+        let
+            isNotInside ( _, dice ) updated =
+                List.isEmpty <| List.filter (\( _, d ) -> dice == d) updated
+
+            calcUpdated ( value, dice ) updated =
+                List.map
+                    (\( n, d ) ->
+                        if d == dice then
+                            ( value + n, d )
+
+                        else
+                            ( n, d )
+                    )
+                    updated
+
+            f : ( Int, Dice ) -> DiceChoice -> DiceChoice
+            f choice updated =
+                if isNotInside choice updated then
+                    List.append updated [ choice ]
+
+                else
+                    calcUpdated choice updated
+        in
+        List.foldr f initialDiceChoice diceChoice
+
+    else
+        diceChoice
+
+
 
 -- UPDATE
 
@@ -139,8 +172,8 @@ update msg model =
             in
             ( resetResult
                 { model
-                    | attackDices = attackDices
-                    , defenseDices = defenseDices
+                    | attackDices = addMissingDiceChoice attackDices
+                    , defenseDices = addMissingDiceChoice defenseDices
                     , textInput = value
                 }
             , Cmd.none
