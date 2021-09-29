@@ -4,3 +4,4 @@ elm-stuff/
 node_modules/
 dist/
 joa-dices-elm.iml
+**/.DS_Store

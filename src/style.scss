@@ -1,5 +1,9 @@
 @charset "utf-8";
 
+/*
+ * BULMA
+ */
+
 // @import "/../node_modules/bulma/bulma.sass";
 
 @import "../node_modules/bulma/sass/utilities/_all.sass";
@@ -22,3 +26,10 @@
 @import "../node_modules/bulma/sass/layout/footer.sass";
 
 @import "../node_modules/bulma/sass/grid/columns.sass";
+
+/*
+ * FONT-AWESOME
+ */
+
+ @import "../node_modules/@fortawesome/fontawesome-free/scss/fontawesome.scss";
+ @import "../node_modules/@fortawesome/fontawesome-free/scss/solid.scss"

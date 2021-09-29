@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Rewrite of the TypeScript project JoA Dice in Elm",
   "dependencies": {
+    "@fortawesome/fontawesome-free": "^5.15.4",
     "bulma": "^0.9.3",
     "elm": "^0.19.1-5"
   },
@@ -21,6 +22,6 @@
   "author": "Yann Cardon",
   "license": "ISC",
   "volta": {
-    "node": "14.18.0"
+    "node": "16.10.0"
   }
 }
