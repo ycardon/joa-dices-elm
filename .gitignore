@@ -1,7 +1,6 @@
 .idea/
+.cache/
 elm-stuff/
-/node_modules/
-/main.js
-/.cache/
-joa-dices-elm.iml
+node_modules/
 dist/
+joa-dices-elm.iml

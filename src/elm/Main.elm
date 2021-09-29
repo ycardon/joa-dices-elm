@@ -19,6 +19,8 @@ config =
     { enableColoredLabel = True
     , enableHideGiganticAndDoomDice = True
     , enableAddMissingDiceChoice = True
+    , enableHelpOnTextInput = False
+    , enableHelpOnDice = True
     }
 
 
@@ -96,24 +98,12 @@ addMissingDiceChoice diceChoice =
             isNotInside ( _, dice ) updated =
                 List.isEmpty <| List.filter (\( _, d ) -> dice == d) updated
 
-            calcUpdated ( value, dice ) updated =
-                List.map
-                    (\( n, d ) ->
-                        if d == dice then
-                            ( value + n, d )
-
-                        else
-                            ( n, d )
-                    )
-                    updated
-
-            f : ( Int, Dice ) -> DiceChoice -> DiceChoice
-            f choice updated =
-                if isNotInside choice updated then
-                    List.append updated [ choice ]
+            f ( value, dice ) updated =
+                if isNotInside ( value, dice ) updated then
+                    updated ++ [ ( value, dice ) ]
 
                 else
-                    calcUpdated choice updated
+                    updateDiceChoice ((+) value) dice updated
         in
         List.foldr f initialDiceChoice diceChoice
 
@@ -130,6 +120,7 @@ type Msg
     | UserPushedRollButton
     | UserPushedResetButton
     | UserUpdatedDiceChoice Bool Dice String
+    | UserIncreasedDiceChoice Bool Dice
     | NewRollResult ( Roll, Roll )
 
 
@@ -183,10 +174,24 @@ update msg model =
             let
                 newModel =
                     if isAttack then
-                        { model | attackDices = updateDiceChoice ( intFromString value, dice ) model.attackDices }
+                        { model | attackDices = updateDiceChoice (\_ -> intFromString value) dice model.attackDices }
 
                     else
-                        { model | defenseDices = updateDiceChoice ( intFromString value, dice ) model.defenseDices }
+                        { model | defenseDices = updateDiceChoice (\_ -> intFromString value) dice model.defenseDices }
+            in
+            ( resetResult
+                { newModel | textInput = encodeDiceChoices ( newModel.attackDices, newModel.defenseDices ) }
+            , Cmd.none
+            )
+
+        UserIncreasedDiceChoice isAttack dice ->
+            let
+                newModel =
+                    if isAttack then
+                        { model | attackDices = updateDiceChoice ((+) 1) dice model.attackDices }
+
+                    else
+                        { model | defenseDices = updateDiceChoice ((+) 1) dice model.defenseDices }
             in
             ( resetResult
                 { newModel | textInput = encodeDiceChoices ( newModel.attackDices, newModel.defenseDices ) }
@@ -194,12 +199,12 @@ update msg model =
             )
 
 
-updateDiceChoice : ( Int, Dice ) -> DiceChoice -> DiceChoice
-updateDiceChoice ( value, dice ) diceChoice =
+updateDiceChoice : (Int -> Int) -> Dice -> DiceChoice -> DiceChoice
+updateDiceChoice fun dice diceChoice =
     let
         f ( n, d ) =
             if d == dice then
-                ( value, d )
+                ( fun n, d )
 
             else
                 ( n, d )
@@ -273,6 +278,11 @@ viewTextInputAndFinalResultSection model =
                         [ text "Roll" ]
                     ]
                 ]
+            , if config.enableHelpOnTextInput then
+                p [ class "help is-hidden-mobile" ] (capitalizeStrong "Black Red Yellow White Gigantic Doom")
+
+              else
+                text ""
             ]
         , viewResult model.attackState model.finalResult True "has-background-danger"
         ]
@@ -325,7 +335,7 @@ viewResult attackState result isTextInputAndFinalResultSection color =
 viewChosenDiceSelector : Bool -> ( Int, Dice ) -> Html Msg
 viewChosenDiceSelector isAttack ( n, dice ) =
     div [ class "field" ]
-        [ coloredDiceLabel config.enableHideGiganticAndDoomDice ( n, dice )
+        [ coloredDiceLabel isAttack ( n, dice )
         , div [ class "control" ]
             [ input
                 [ class "input"
@@ -337,14 +347,18 @@ viewChosenDiceSelector isAttack ( n, dice ) =
                 ]
                 []
             ]
-        , p [ class "help" ] [ text <| printDice dice ]
+        , if config.enableHelpOnDice then
+            p [ class "help" ] [ text <| printDice dice ]
+
+          else
+            text ""
         ]
 
 
-coloredDiceLabel : Bool -> ( Int, Dice ) -> Html msg
-coloredDiceLabel isEnabled ( n, dice ) =
-    if isEnabled then
-        label [ class "label" ]
+coloredDiceLabel : Bool -> ( Int, Dice ) -> Html Msg
+coloredDiceLabel isAttack ( n, dice ) =
+    if config.enableColoredLabel then
+        label [ class "label", onClick (UserIncreasedDiceChoice isAttack dice) ]
             [ i
                 [ class <| fontAwesome n
                 , style "color" dice.color
@@ -355,7 +369,7 @@ coloredDiceLabel isEnabled ( n, dice ) =
             ]
 
     else
-        label [ class "label" ] [ text <| dice.name ]
+        label [ class "label", onClick (UserIncreasedDiceChoice isAttack dice) ] [ text <| dice.name ]
 
 
 viewHeader : () -> Html msg
@@ -373,7 +387,7 @@ viewHeader () =
 viewFooter : () -> Html msg
 viewFooter () =
     footer [ class "footer is-hidden-mobile" ]
-        [ div [ class "content has-text-centered" ]
+        [ div [ class "has-text-centered" ]
             [ text <| "made with " ++ heartString ++ ", "
             , a [ href "https://elm-lang.org" ] [ text "elm" ]
             , text " and "
@@ -474,3 +488,15 @@ fontAwesome n =
 
         _ ->
             "fas fa-dice"
+
+
+capitalizeStrong : String -> List (Html msg)
+capitalizeStrong string =
+    String.split " " string
+        |> List.concatMap
+            (\s ->
+                [ span [] [ text <| String.left 1 s ]
+                , span [ class "has-text-grey" ] [ text <| String.dropLeft 1 s ]
+                , text " "
+                ]
+            )
