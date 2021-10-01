@@ -12,19 +12,6 @@ import Random
 
 
 
--- CONFIG
-
-
-config =
-    { enableColoredLabel = True
-    , enableHideGiganticAndDoomDice = True
-    , enableAddMissingDiceChoice = True
-    , enableHelpOnTextInput = False
-    , enableHelpOnDice = True
-    }
-
-
-
 -- MAIN
 
 
@@ -41,10 +28,13 @@ main =
 -- MODEL
 
 
-type AttackState
-    = AttackSucceeded
-    | AttackFailed
-    | NoAttack
+type alias Config =
+    { enableColoredLabel : Bool
+    , enableHideGiganticAndDoomDice : Bool
+    , enableAddMissingDiceChoice : Bool
+    , enableHelpOnTextInput : Bool
+    , enableHelpOnDice : Bool
+    }
 
 
 type alias Model =
@@ -55,25 +45,43 @@ type alias Model =
     , defenseResult : Roll
     , finalResult : Roll
     , attackState : AttackState
+    , config : Config
     }
+
+
+type AttackState
+    = AttackSucceeded
+    | AttackFailed
+    | NoAttack
 
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( { attackDices = initialDiceChoice
-      , defenseDices = initialDiceChoice
-      , textInput = ""
-      , attackResult = []
-      , defenseResult = []
-      , finalResult = []
-      , attackState = NoAttack
-      }
-    , Cmd.none
-    )
+    let
+        config =
+            { enableColoredLabel = True
+            , enableHideGiganticAndDoomDice = True
+            , enableAddMissingDiceChoice = True
+            , enableHelpOnTextInput = False
+            , enableHelpOnDice = True
+            }
+
+        model =
+            { attackDices = initialDiceChoice config
+            , defenseDices = initialDiceChoice config
+            , textInput = ""
+            , attackResult = []
+            , defenseResult = []
+            , finalResult = []
+            , attackState = NoAttack
+            , config = config
+            }
+    in
+    ( model, Cmd.none )
 
 
-initialDiceChoice : DiceChoice
-initialDiceChoice =
+initialDiceChoice : Config -> DiceChoice
+initialDiceChoice config =
     if config.enableHideGiganticAndDoomDice then
         [ ( 0, blackDice )
         , ( 0, redDice )
@@ -91,8 +99,8 @@ initialDiceChoice =
         ]
 
 
-addMissingDiceChoice : DiceChoice -> DiceChoice
-addMissingDiceChoice diceChoice =
+addMissingDiceChoice : Config -> DiceChoice -> DiceChoice
+addMissingDiceChoice config diceChoice =
     if config.enableAddMissingDiceChoice then
         let
             isNotInside ( _, dice ) updated =
@@ -106,7 +114,7 @@ addMissingDiceChoice diceChoice =
                 else
                     updateDiceChoice ((+) value) dice updated
         in
-        List.foldr f initialDiceChoice diceChoice
+        List.foldr f (initialDiceChoice config) diceChoice
 
     else
         diceChoice
@@ -134,7 +142,11 @@ update msg model =
             )
 
         UserPushedResetButton ->
-            init ()
+            let
+                ( m, c ) =
+                    init ()
+            in
+            ( { m | config = m.config }, c )
 
         NewRollResult ( attackResult, defenseResult ) ->
             let
@@ -164,8 +176,8 @@ update msg model =
             in
             ( resetResult
                 { model
-                    | attackDices = addMissingDiceChoice attackDices
-                    , defenseDices = addMissingDiceChoice defenseDices
+                    | attackDices = addMissingDiceChoice model.config attackDices
+                    , defenseDices = addMissingDiceChoice model.config defenseDices
                     , textInput = value
                 }
             , Cmd.none
@@ -279,7 +291,7 @@ viewTextInputAndFinalResultSection model =
                         [ text "Roll" ]
                     ]
                 ]
-            , if config.enableHelpOnTextInput then
+            , if model.config.enableHelpOnTextInput then
                 p [ class "help is-hidden-mobile" ] (capitalizeStrong "Black Red Yellow White Gigantic Doom")
 
               else
@@ -310,7 +322,7 @@ viewDiceSelectionAndResultSection model isAttack =
     div [ class "column" ]
         [ div [ class <| "box is-hidden-mobile " ++ x.color ++ "-light" ]
             [ h2 [ class "title" ] [ text x.name ]
-            , div [] (List.map (viewChosenDiceSelector isAttack) x.diceChoice)
+            , div [] (List.map (viewChosenDiceSelector model.config isAttack) x.diceChoice)
             ]
         , viewResult model.attackState x.result False x.color
         ]
@@ -333,10 +345,10 @@ viewResult attackState result isTextInputAndFinalResultSection color =
         text ""
 
 
-viewChosenDiceSelector : Bool -> ( Int, Dice ) -> Html Msg
-viewChosenDiceSelector isAttack ( n, dice ) =
+viewChosenDiceSelector : Config -> Bool -> ( Int, Dice ) -> Html Msg
+viewChosenDiceSelector config isAttack ( n, dice ) =
     div [ class "field" ]
-        [ coloredDiceLabel isAttack ( n, dice )
+        [ coloredDiceLabel config isAttack ( n, dice )
         , div [ class "control" ]
             [ input
                 [ class "input"
@@ -356,8 +368,8 @@ viewChosenDiceSelector isAttack ( n, dice ) =
         ]
 
 
-coloredDiceLabel : Bool -> ( Int, Dice ) -> Html Msg
-coloredDiceLabel isAttack ( n, dice ) =
+coloredDiceLabel : Config -> Bool -> ( Int, Dice ) -> Html Msg
+coloredDiceLabel config isAttack ( n, dice ) =
     if config.enableColoredLabel then
         label [ class "label", onClick (UserIncreasedDiceChoice isAttack dice) ]
             [ i
