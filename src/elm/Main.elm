@@ -98,6 +98,7 @@ addMissingDiceChoice diceChoice =
             isNotInside ( _, dice ) updated =
                 List.isEmpty <| List.filter (\( _, d ) -> dice == d) updated
 
+            f : ( Int, Dice ) -> DiceChoice -> DiceChoice
             f ( value, dice ) updated =
                 if isNotInside ( value, dice ) updated then
                     updated ++ [ ( value, dice ) ]
@@ -200,11 +201,11 @@ update msg model =
 
 
 updateDiceChoice : (Int -> Int) -> Dice -> DiceChoice -> DiceChoice
-updateDiceChoice fun dice diceChoice =
+updateDiceChoice updateFunction dice diceChoice =
     let
         f ( n, d ) =
             if d == dice then
-                ( fun n, d )
+                ( updateFunction n, d )
 
             else
                 ( n, d )

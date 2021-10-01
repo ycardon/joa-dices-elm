@@ -1,7 +1,4 @@
-module JoaDiceParser exposing
-    ( decodeDiceChoices
-    , encodeDiceChoices
-    )
+module JoaDiceParser exposing (decodeDiceChoices, encodeDiceChoices)
 
 import JoaDice exposing (..)
 import List exposing (foldl)
@@ -15,6 +12,7 @@ import String exposing (contains, dropRight, right, split, toInt, toUpper)
 decodeDiceChoices : String -> ( DiceChoice, DiceChoice, Bool )
 decodeDiceChoices string =
     let
+        f : String -> ( DiceChoice, DiceChoice, Bool ) -> ( DiceChoice, DiceChoice, Bool )
         f str ( att, def, isDef ) =
             if contains "-" str then
                 ( att, def, True )
