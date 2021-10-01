@@ -14,7 +14,7 @@
     "sass": "^1.42.1"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "elm-test",
     "dev": "parcel src/index.html",
     "build": "rm -fr dist/ && parcel build src/index.html --no-source-maps",
     "clean": "rm -fr elm-stuff/ node_modules/ .cache/ dist/"
