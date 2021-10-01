@@ -91,12 +91,12 @@ roll1 dice =
 
 rollN : ( Int, Dice ) -> Random.Generator Roll
 rollN ( n, dice ) =
-    Random.list n <| roll1 dice
+    Random.list n (roll1 dice)
 
 
 rollDices : DiceChoice -> Random.Generator Roll
 rollDices dices =
-    List.foldr (Random.map2 (++)) (Random.constant []) <| List.map rollN dices
+    List.foldr (Random.map2 (++)) (Random.constant []) (List.map rollN dices)
 
 
 rollDicesSet : DiceChoice -> DiceChoice -> Random.Generator ( Roll, Roll )
@@ -105,7 +105,7 @@ rollDicesSet set1 set2 =
 
 
 
--- | apply defense shields on the attack and remove unrelevant faces from the attack
+-- | apply defense shields on the attack and remove irrelevant faces from the attack
 
 
 applyDefense : Roll -> Roll -> Roll
