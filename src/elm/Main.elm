@@ -393,7 +393,7 @@ coloredDiceLabel config isAttack ( n, dice ) =
 viewConfigPanel : Config -> Bool -> Html Msg
 viewConfigPanel config isOpen =
     if isOpen then
-        div [ class "block box has-background-grey-lighter" ]
+        div [ class "block box has-background-warning-light" ]
             [ viewConfigItem config "enableColoredLabel" " Colored dice label"
             , viewConfigItem config "enableHideGiganticAndDoomDice" " Hide Gigantic and Doom dice"
             , viewConfigItem config "enableAddMissingDiceChoice" " Show all dice when typing"
