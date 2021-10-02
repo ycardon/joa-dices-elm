@@ -17,7 +17,8 @@
     "test": "elm-test",
     "dev": "parcel src/index.html",
     "build": "rm -fr dist/ && parcel build src/index.html --no-source-maps",
-    "clean": "rm -fr elm-stuff/ node_modules/ .cache/ dist/"
+    "clean": "rm -fr elm-stuff/ node_modules/ .cache/ dist/",
+    "deploy" : "npm run build && cd ../ycardon.github.io/ && rm * && cp ../joa-dices-elm/dist/* . && git add . && git commit -m 'new version' && git push"
   },
   "author": "Yann Cardon",
   "license": "ISC",
