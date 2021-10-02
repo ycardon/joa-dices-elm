@@ -1,9 +1,10 @@
 module Main exposing (main, printRoll)
 
 import Browser
+import Config exposing (Config)
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Html.Events exposing (onClick, onInput)
+import Html.Events exposing (onCheck, onClick, onInput)
 import Html.Events.Extra exposing (onEnter)
 import JoaDice exposing (..)
 import JoaDiceParser exposing (decodeDiceChoices, encodeDiceChoices)
@@ -28,15 +29,6 @@ main =
 -- MODEL
 
 
-type alias Config =
-    { enableColoredLabel : Bool
-    , enableHideGiganticAndDoomDice : Bool
-    , enableAddMissingDiceChoice : Bool
-    , enableHelpOnTextInput : Bool
-    , enableHelpOnDice : Bool
-    }
-
-
 type alias Model =
     { attackDices : DiceChoice
     , defenseDices : DiceChoice
@@ -45,7 +37,8 @@ type alias Model =
     , defenseResult : Roll
     , finalResult : Roll
     , attackState : AttackState
-    , config : Config
+    , isConfigOpen : Bool
+    , config : Config.Config
     }
 
 
@@ -59,12 +52,14 @@ init : () -> ( Model, Cmd Msg )
 init _ =
     let
         config =
-            { enableColoredLabel = True
-            , enableHideGiganticAndDoomDice = True
-            , enableAddMissingDiceChoice = True
-            , enableHelpOnTextInput = False
-            , enableHelpOnDice = True
-            }
+            Config.init
+                [ ( "enableColoredLabel", True )
+                , ( "enableHideGiganticAndDoomDice", True )
+                , ( "enableAddMissingDiceChoice", True )
+                , ( "enableHelpOnTextInput", False )
+                , ( "enableHelpOnDice", True )
+                ]
+                []
 
         model =
             { attackDices = initialDiceChoice config
@@ -74,6 +69,7 @@ init _ =
             , defenseResult = []
             , finalResult = []
             , attackState = NoAttack
+            , isConfigOpen = False
             , config = config
             }
     in
@@ -82,7 +78,7 @@ init _ =
 
 initialDiceChoice : Config -> DiceChoice
 initialDiceChoice config =
-    if config.enableHideGiganticAndDoomDice then
+    if Config.getBool "enableHideGiganticAndDoomDice" config then
         [ ( 0, blackDice )
         , ( 0, redDice )
         , ( 0, yellowDice )
@@ -101,7 +97,7 @@ initialDiceChoice config =
 
 addMissingDiceChoice : Config -> DiceChoice -> DiceChoice
 addMissingDiceChoice config diceChoice =
-    if config.enableAddMissingDiceChoice then
+    if Config.getBool "enableAddMissingDiceChoice" config then
         let
             isNotInside ( _, dice ) updated =
                 List.isEmpty <| List.filter (\( _, d ) -> dice == d) updated
@@ -112,7 +108,7 @@ addMissingDiceChoice config diceChoice =
                     updated ++ [ ( value, dice ) ]
 
                 else
-                    updateDiceChoice ((+) value) dice updated
+                    updateDiceChoice dice ((+) value) updated
         in
         List.foldr f (initialDiceChoice config) diceChoice
 
@@ -131,6 +127,8 @@ type Msg
     | UserUpdatedDiceChoice Bool Dice String
     | UserIncreasedDiceChoice Bool Dice
     | NewRollResult ( Roll, Roll )
+    | UserToggledConfigPanel
+    | UserUpdatedBoolConfig String Bool
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -146,7 +144,13 @@ update msg model =
                 ( m, c ) =
                     init ()
             in
-            ( { m | config = m.config }, c )
+            ( { m | config = model.config }, c )
+
+        UserToggledConfigPanel ->
+            ( { model | isConfigOpen = not model.isConfigOpen }, Cmd.none )
+
+        UserUpdatedBoolConfig key value ->
+            ( { model | config = Config.setBool key value model.config }, Cmd.none )
 
         NewRollResult ( attackResult, defenseResult ) ->
             let
@@ -187,10 +191,10 @@ update msg model =
             let
                 newModel =
                     if isAttack then
-                        { model | attackDices = updateDiceChoice (\_ -> intFromString value) dice model.attackDices }
+                        { model | attackDices = updateDiceChoice dice (\_ -> intFromString value) model.attackDices }
 
                     else
-                        { model | defenseDices = updateDiceChoice (\_ -> intFromString value) dice model.defenseDices }
+                        { model | defenseDices = updateDiceChoice dice (\_ -> intFromString value) model.defenseDices }
             in
             ( resetResult
                 { newModel | textInput = encodeDiceChoices ( newModel.attackDices, newModel.defenseDices ) }
@@ -201,10 +205,10 @@ update msg model =
             let
                 newModel =
                     if isAttack then
-                        { model | attackDices = updateDiceChoice ((+) 1) dice model.attackDices }
+                        { model | attackDices = updateDiceChoice dice ((+) 1) model.attackDices }
 
                     else
-                        { model | defenseDices = updateDiceChoice ((+) 1) dice model.defenseDices }
+                        { model | defenseDices = updateDiceChoice dice ((+) 1) model.defenseDices }
             in
             ( resetResult
                 { newModel | textInput = encodeDiceChoices ( newModel.attackDices, newModel.defenseDices ) }
@@ -212,12 +216,12 @@ update msg model =
             )
 
 
-updateDiceChoice : (Int -> Int) -> Dice -> DiceChoice -> DiceChoice
-updateDiceChoice updateFunction dice diceChoice =
+updateDiceChoice : Dice -> (Int -> Int) -> DiceChoice -> DiceChoice
+updateDiceChoice dice alter diceChoice =
     let
         f ( n, d ) =
             if d == dice then
-                ( updateFunction n, d )
+                ( alter n, d )
 
             else
                 ( n, d )
@@ -291,12 +295,13 @@ viewTextInputAndFinalResultSection model =
                         [ text "Roll" ]
                     ]
                 ]
-            , if model.config.enableHelpOnTextInput then
+            , if Config.getBool "enableHelpOnTextInput" model.config then
                 p [ class "help is-hidden-mobile" ] (capitalizeStrong "Black Red Yellow White Gigantic Doom")
 
               else
                 text ""
             ]
+        , viewConfigPanel model.config model.isConfigOpen
         , viewResult model.attackState model.finalResult True "has-background-danger"
         ]
 
@@ -337,7 +342,7 @@ viewResult attackState result isTextInputAndFinalResultSection color =
                     [ text "Attack failed" ]
 
                  else
-                    List.map (\f -> div [] [ text f ]) <| printRoll result
+                    List.map (\f -> div [] [ text f ]) (printRoll result)
                 )
             ]
 
@@ -360,7 +365,7 @@ viewChosenDiceSelector config isAttack ( n, dice ) =
                 ]
                 []
             ]
-        , if config.enableHelpOnDice then
+        , if Config.getBool "enableHelpOnDice" config then
             p [ class "help" ] [ text <| printDice dice ]
 
           else
@@ -370,7 +375,7 @@ viewChosenDiceSelector config isAttack ( n, dice ) =
 
 coloredDiceLabel : Config -> Bool -> ( Int, Dice ) -> Html Msg
 coloredDiceLabel config isAttack ( n, dice ) =
-    if config.enableColoredLabel then
+    if Config.getBool "enableColoredLabel" config then
         label [ class "label", onClick (UserIncreasedDiceChoice isAttack dice) ]
             [ i
                 [ class <| fontAwesome n
@@ -382,7 +387,39 @@ coloredDiceLabel config isAttack ( n, dice ) =
             ]
 
     else
-        label [ class "label", onClick (UserIncreasedDiceChoice isAttack dice) ] [ text <| dice.name ]
+        label [ class "label", onClick (UserIncreasedDiceChoice isAttack dice) ] [ text dice.name ]
+
+
+viewConfigPanel : Config -> Bool -> Html Msg
+viewConfigPanel config isOpen =
+    if isOpen then
+        div [ class "block box has-background-grey-lighter" ]
+            [ viewConfigItem config "enableColoredLabel" " Colored dice label"
+            , viewConfigItem config "enableHideGiganticAndDoomDice" " Hide Gigantic and Doom dice"
+            , viewConfigItem config "enableAddMissingDiceChoice" " Show all dice when typing"
+            , viewConfigItem config "enableHelpOnTextInput" " Show help on text input"
+            , viewConfigItem config "enableHelpOnDice" " Show dice faces"
+            ]
+
+    else
+        text ""
+
+
+viewConfigItem : Config -> String -> String -> Html Msg
+viewConfigItem config key description =
+    div [ class "field" ]
+        [ div [ class "control" ]
+            [ label [ class "checkbox" ]
+                [ input
+                    [ type_ "checkbox"
+                    , checked <| Config.getBool key config
+                    , onCheck (UserUpdatedBoolConfig key)
+                    ]
+                    []
+                , text description
+                ]
+            ]
+        ]
 
 
 viewHeader : () -> Html msg
@@ -397,11 +434,11 @@ viewHeader () =
         ]
 
 
-viewFooter : () -> Html msg
+viewFooter : () -> Html Msg
 viewFooter () =
     footer [ class "footer is-hidden-mobile" ]
         [ div [ class "has-text-centered" ]
-            [ text <| "made with " ++ heartString ++ ", "
+            [ span [ onClick UserToggledConfigPanel ] [ text <| "made with " ++ heartString ++ ", " ]
             , a [ href "https://elm-lang.org" ] [ text "elm" ]
             , text " and "
             , a [ href "https://bulma.io" ] [ text "bulma" ]
