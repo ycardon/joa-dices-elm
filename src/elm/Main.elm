@@ -1,7 +1,6 @@
 module Main exposing (main, printRoll)
 
 import Browser
-import Config exposing (Config)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onCheck, onClick, onInput)
@@ -29,6 +28,15 @@ main =
 -- MODEL
 
 
+type alias Config =
+    { enableColoredLabel : Bool
+    , enableHideGiganticAndDoomDice : Bool
+    , enableAddMissingDiceChoice : Bool
+    , enableHelpOnTextInput : Bool
+    , enableHelpOnDice : Bool
+    }
+
+
 type alias Model =
     { attackDices : DiceChoice
     , defenseDices : DiceChoice
@@ -38,7 +46,7 @@ type alias Model =
     , finalResult : Roll
     , attackState : AttackState
     , isConfigOpen : Bool
-    , config : Config.Config
+    , config : Config
     }
 
 
@@ -52,14 +60,12 @@ init : () -> ( Model, Cmd Msg )
 init _ =
     let
         config =
-            Config.init
-                [ ( "enableColoredLabel", True )
-                , ( "enableHideGiganticAndDoomDice", True )
-                , ( "enableAddMissingDiceChoice", True )
-                , ( "enableHelpOnTextInput", False )
-                , ( "enableHelpOnDice", True )
-                ]
-                []
+            { enableColoredLabel = True
+            , enableHideGiganticAndDoomDice = True
+            , enableAddMissingDiceChoice = True
+            , enableHelpOnTextInput = False
+            , enableHelpOnDice = True
+            }
 
         model =
             { attackDices = initialDiceChoice config
@@ -78,7 +84,7 @@ init _ =
 
 initialDiceChoice : Config -> DiceChoice
 initialDiceChoice config =
-    if Config.getBool "enableHideGiganticAndDoomDice" config then
+    if config.enableHideGiganticAndDoomDice then
         [ ( 0, blackDice )
         , ( 0, redDice )
         , ( 0, yellowDice )
@@ -97,7 +103,7 @@ initialDiceChoice config =
 
 addMissingDiceChoice : Config -> DiceChoice -> DiceChoice
 addMissingDiceChoice config diceChoice =
-    if Config.getBool "enableAddMissingDiceChoice" config then
+    if config.enableAddMissingDiceChoice then
         let
             isNotInside ( _, dice ) updated =
                 List.isEmpty <| List.filter (\( _, d ) -> dice == d) updated
@@ -128,7 +134,7 @@ type Msg
     | UserIncreasedDiceChoice Bool Dice
     | NewRollResult ( Roll, Roll )
     | UserToggledConfigPanel
-    | UserUpdatedBoolConfig String Bool
+    | UserUpdatedConfig (Config -> Bool -> Config) Bool
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -149,8 +155,8 @@ update msg model =
         UserToggledConfigPanel ->
             ( { model | isConfigOpen = not model.isConfigOpen }, Cmd.none )
 
-        UserUpdatedBoolConfig key value ->
-            ( { model | config = Config.setBool key value model.config }, Cmd.none )
+        UserUpdatedConfig alter value ->
+            ( { model | config = alter model.config value }, Cmd.none )
 
         NewRollResult ( attackResult, defenseResult ) ->
             let
@@ -295,7 +301,7 @@ viewTextInputAndFinalResultSection model =
                         [ text "Roll" ]
                     ]
                 ]
-            , if Config.getBool "enableHelpOnTextInput" model.config then
+            , if model.config.enableHelpOnTextInput then
                 p [ class "help is-hidden-mobile" ] (capitalizeStrong "Black Red Yellow White Gigantic Doom")
 
               else
@@ -365,7 +371,7 @@ viewChosenDiceSelector config isAttack ( n, dice ) =
                 ]
                 []
             ]
-        , if Config.getBool "enableHelpOnDice" config then
+        , if config.enableHelpOnDice then
             p [ class "help" ] [ text <| printDice dice ]
 
           else
@@ -375,7 +381,7 @@ viewChosenDiceSelector config isAttack ( n, dice ) =
 
 coloredDiceLabel : Config -> Bool -> ( Int, Dice ) -> Html Msg
 coloredDiceLabel config isAttack ( n, dice ) =
-    if Config.getBool "enableColoredLabel" config then
+    if config.enableColoredLabel then
         label [ class "label", onClick (UserIncreasedDiceChoice isAttack dice) ]
             [ i
                 [ class <| fontAwesome n
@@ -394,28 +400,38 @@ viewConfigPanel : Config -> Bool -> Html Msg
 viewConfigPanel config isOpen =
     if isOpen then
         div [ class "block box has-background-warning-light" ]
-            [ viewConfigItem config "enableColoredLabel" " Colored dice label"
-            , viewConfigItem config "enableHideGiganticAndDoomDice" " Hide Gigantic and Doom dice"
-            , viewConfigItem config "enableAddMissingDiceChoice" " Show all dice when typing"
-            , viewConfigItem config "enableHelpOnTextInput" " Show help on text input"
-            , viewConfigItem config "enableHelpOnDice" " Show dice faces"
+            [ viewConfigItem
+                config.enableColoredLabel
+                (\c b -> { c | enableColoredLabel = b })
+                " Colored dice label"
+            , viewConfigItem
+                config.enableHideGiganticAndDoomDice
+                (\c b -> { c | enableHideGiganticAndDoomDice = b })
+                " Hide Gigantic and Doom dice"
+            , viewConfigItem
+                config.enableAddMissingDiceChoice
+                (\c b -> { c | enableAddMissingDiceChoice = b })
+                " Show all dice when typing"
+            , viewConfigItem
+                config.enableHelpOnTextInput
+                (\c b -> { c | enableHelpOnTextInput = b })
+                " Show help on text input"
+            , viewConfigItem
+                config.enableHelpOnDice
+                (\c b -> { c | enableHelpOnDice = b })
+                " Show dice faces"
             ]
 
     else
         text ""
 
 
-viewConfigItem : Config -> String -> String -> Html Msg
-viewConfigItem config key description =
+viewConfigItem : Bool -> (Config -> Bool -> Config) -> String -> Html Msg
+viewConfigItem value alter description =
     div [ class "field" ]
         [ div [ class "control" ]
             [ label [ class "checkbox" ]
-                [ input
-                    [ type_ "checkbox"
-                    , checked <| Config.getBool key config
-                    , onCheck (UserUpdatedBoolConfig key)
-                    ]
-                    []
+                [ input [ type_ "checkbox", checked value, onCheck (UserUpdatedConfig alter) ] []
                 , text description
                 ]
             ]
