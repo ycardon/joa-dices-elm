@@ -24,16 +24,16 @@ decodeDiceChoices string =
 
                     Just d ->
                         if not isDef then
-                            ( ( decodeInt str, d ) :: att, def, isDef )
+                            ( ( decodeIntOrOne str, d ) :: att, def, isDef )
 
                         else
-                            ( att, ( decodeInt str, d ) :: def, isDef )
+                            ( att, ( decodeIntOrOne str, d ) :: def, isDef )
     in
     string |> split " " |> foldl f ( [], [], False )
 
 
-decodeInt : String -> Int
-decodeInt str =
+decodeIntOrOne : String -> Int
+decodeIntOrOne str =
     str |> dropRight 1 |> toInt |> Maybe.withDefault 1
 
 

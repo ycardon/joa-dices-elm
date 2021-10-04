@@ -12,7 +12,9 @@ import Random
 
 
 
--- MAIN
+--|
+--| MAIN
+--|
 
 
 main =
@@ -25,7 +27,9 @@ main =
 
 
 
--- MODEL
+--|
+--| MODEL
+--|
 
 
 type alias Config =
@@ -123,7 +127,9 @@ addMissingDiceChoice config diceChoice =
 
 
 
--- UPDATE
+--|
+--| UPDATE
+--|
 
 
 type Msg
@@ -197,10 +203,10 @@ update msg model =
             let
                 newModel =
                     if isAttack then
-                        { model | attackDices = updateDiceChoice dice (\_ -> intFromString value) model.attackDices }
+                        { model | attackDices = updateDiceChoice dice (\_ -> intOrZeroFromString value) model.attackDices }
 
                     else
-                        { model | defenseDices = updateDiceChoice dice (\_ -> intFromString value) model.defenseDices }
+                        { model | defenseDices = updateDiceChoice dice (\_ -> intOrZeroFromString value) model.defenseDices }
             in
             ( resetResult
                 { newModel | textInput = encodeDiceChoices ( newModel.attackDices, newModel.defenseDices ) }
@@ -246,7 +252,9 @@ resetResult model =
 
 
 
--- SUBSCRIPTIONS
+--|
+--| SUBSCRIPTIONS
+--|
 
 
 subscriptions : Model -> Sub Msg
@@ -255,7 +263,9 @@ subscriptions _ =
 
 
 
--- VIEW
+--|
+--| VIEW
+--|
 
 
 view : Model -> Html Msg
@@ -384,7 +394,7 @@ coloredDiceLabel config isAttack ( n, dice ) =
     if config.enableColoredLabel then
         label [ class "label", onClick (UserIncreasedDiceChoice isAttack dice) ]
             [ i
-                [ class <| fontAwesome n
+                [ class <| diceIcon n
                 , style "color" dice.color
                 , style "text-shadow" "-2px 2px 4px Silver, 2px -2px 0 White"
                 ]
@@ -467,11 +477,13 @@ viewFooter () =
 
 
 
--- SUPPORT FUNCTIONS
+--|
+--| UTILS
+--|
 
 
-intFromString : String -> Int
-intFromString value =
+intOrZeroFromString : String -> Int
+intOrZeroFromString value =
     Maybe.withDefault 0 (String.toInt value)
 
 
@@ -528,8 +540,8 @@ printDice dice =
     List.foldl (\f s -> s ++ printFace f ++ " ") "" dice.faces
 
 
-fontAwesome : Int -> String
-fontAwesome n =
+diceIcon : Int -> String
+diceIcon n =
     case n of
         0 ->
             ""
