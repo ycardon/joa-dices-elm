@@ -415,14 +415,6 @@ viewConfigPanel config isOpen =
                 (\c b -> { c | enableColoredLabel = b })
                 " Colored dice label"
             , viewConfigItem
-                config.enableHideGiganticAndDoomDice
-                (\c b -> { c | enableHideGiganticAndDoomDice = b })
-                " Hide Gigantic and Doom dice"
-            , viewConfigItem
-                config.enableAddMissingDiceChoice
-                (\c b -> { c | enableAddMissingDiceChoice = b })
-                " Show all dice when typing"
-            , viewConfigItem
                 config.enableHelpOnTextInput
                 (\c b -> { c | enableHelpOnTextInput = b })
                 " Show help on text input"
@@ -430,6 +422,14 @@ viewConfigPanel config isOpen =
                 config.enableHelpOnDice
                 (\c b -> { c | enableHelpOnDice = b })
                 " Show dice faces"
+            , viewConfigItem
+                config.enableAddMissingDiceChoice
+                (\c b -> { c | enableAddMissingDiceChoice = b })
+                " Show all dice when typing"
+            , viewConfigItem
+                config.enableHideGiganticAndDoomDice
+                (\c b -> { c | enableHideGiganticAndDoomDice = b })
+                " & hide Gigantic and Doom dice"
             ]
 
     else
