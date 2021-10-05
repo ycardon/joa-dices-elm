@@ -12,9 +12,7 @@ import Random
 
 
 
---|
---| MAIN
---|
+-- MAIN
 
 
 main =
@@ -27,9 +25,27 @@ main =
 
 
 
---|
---| MODEL
---|
+-- MODEL
+
+
+type alias Model =
+    { attackDices : DiceChoice
+    , defenseDices : DiceChoice
+    , textInput : String
+    , attackResult : AttackResult
+    , isConfigOpen : Bool
+    , config : Config
+    }
+
+
+type AttackResult
+    = NoAttack
+    | AttackResult
+        { attackResult : Roll
+        , defenseResult : Roll
+        , finalResult : Roll
+        , isSuccess : Bool
+        }
 
 
 type alias Config =
@@ -39,25 +55,6 @@ type alias Config =
     , enableHelpOnTextInput : Bool
     , enableHelpOnDice : Bool
     }
-
-
-type alias Model =
-    { attackDices : DiceChoice
-    , defenseDices : DiceChoice
-    , textInput : String
-    , attackResult : Roll
-    , defenseResult : Roll
-    , finalResult : Roll
-    , attackState : AttackState
-    , isConfigOpen : Bool
-    , config : Config
-    }
-
-
-type AttackState
-    = AttackSucceeded
-    | AttackFailed
-    | NoAttack
 
 
 init : () -> ( Model, Cmd Msg )
@@ -75,10 +72,7 @@ init _ =
             { attackDices = initialDiceChoice config
             , defenseDices = initialDiceChoice config
             , textInput = ""
-            , attackResult = []
-            , defenseResult = []
-            , finalResult = []
-            , attackState = NoAttack
+            , attackResult = NoAttack
             , isConfigOpen = False
             , config = config
             }
@@ -127,25 +121,53 @@ addMissingDiceChoice config diceChoice =
 
 
 
---|
---| UPDATE
---|
+-- UPDATE
 
 
-type Msg
-    = UserTypedText String
+type
+    Msg
+    -- config panel
+    = UserToggledConfigPanel
+    | UserUpdatedConfig (Config -> Bool -> Config) Bool
+      -- rolling dices
+    | NewRollResult ( Roll, Roll )
     | UserPushedRollButton
     | UserPushedResetButton
+      -- dice selection
+    | UserTypedText String
     | UserUpdatedDiceChoice Bool Dice String
     | UserIncreasedDiceChoice Bool Dice
-    | NewRollResult ( Roll, Roll )
-    | UserToggledConfigPanel
-    | UserUpdatedConfig (Config -> Bool -> Config) Bool
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        UserToggledConfigPanel ->
+            ( { model | isConfigOpen = not model.isConfigOpen }, Cmd.none )
+
+        UserUpdatedConfig alter value ->
+            ( { model | config = alter model.config value }, Cmd.none )
+
+        NewRollResult ( attackResult, defenseResult ) ->
+            let
+                finalResult =
+                    applyDefense attackResult defenseResult
+
+                isSuccess =
+                    finalResult == []
+            in
+            ( { model
+                | attackResult =
+                    AttackResult
+                        { attackResult = attackResult
+                        , defenseResult = defenseResult
+                        , finalResult = finalResult
+                        , isSuccess = isSuccess
+                        }
+              }
+            , Cmd.none
+            )
+
         UserPushedRollButton ->
             ( model
             , Random.generate NewRollResult (rollDicesSet model.attackDices model.defenseDices)
@@ -158,74 +180,43 @@ update msg model =
             in
             ( { m | config = model.config }, c )
 
-        UserToggledConfigPanel ->
-            ( { model | isConfigOpen = not model.isConfigOpen }, Cmd.none )
-
-        UserUpdatedConfig alter value ->
-            ( { model | config = alter model.config value }, Cmd.none )
-
-        NewRollResult ( attackResult, defenseResult ) ->
-            let
-                attackVsDefenseResult =
-                    applyDefense attackResult defenseResult
-
-                attackState =
-                    if attackVsDefenseResult == [] then
-                        AttackFailed
-
-                    else
-                        AttackSucceeded
-            in
-            ( { model
-                | attackResult = attackResult
-                , defenseResult = defenseResult
-                , finalResult = attackVsDefenseResult
-                , attackState = attackState
-              }
-            , Cmd.none
-            )
-
         UserTypedText value ->
             let
                 ( attackDices, defenseDices, _ ) =
                     decodeDiceChoices value
             in
-            ( resetResult
-                { model
-                    | attackDices = addMissingDiceChoice model.config attackDices
-                    , defenseDices = addMissingDiceChoice model.config defenseDices
-                    , textInput = value
-                }
+            ( { model
+                | attackDices = addMissingDiceChoice model.config attackDices
+                , defenseDices = addMissingDiceChoice model.config defenseDices
+                , textInput = value
+                , attackResult = NoAttack
+              }
             , Cmd.none
             )
 
         UserUpdatedDiceChoice isAttack dice value ->
-            let
-                newModel =
-                    if isAttack then
-                        { model | attackDices = updateDiceChoice dice (\_ -> intOrZeroFromString value) model.attackDices }
-
-                    else
-                        { model | defenseDices = updateDiceChoice dice (\_ -> intOrZeroFromString value) model.defenseDices }
-            in
-            ( resetResult
-                { newModel | textInput = encodeDiceChoices ( newModel.attackDices, newModel.defenseDices ) }
-            , Cmd.none
-            )
+            updateDiceChoiceMessageHandler isAttack dice (\_ -> intOrZeroFromString value) model
 
         UserIncreasedDiceChoice isAttack dice ->
-            let
-                newModel =
-                    if isAttack then
-                        { model | attackDices = updateDiceChoice dice ((+) 1) model.attackDices }
+            updateDiceChoiceMessageHandler isAttack dice ((+) 1) model
 
-                    else
-                        { model | defenseDices = updateDiceChoice dice ((+) 1) model.defenseDices }
-            in
-            ( resetResult
-                { newModel | textInput = encodeDiceChoices ( newModel.attackDices, newModel.defenseDices ) }
-            , Cmd.none
-            )
+
+updateDiceChoiceMessageHandler : Bool -> Dice -> (Int -> Int) -> Model -> ( Model, Cmd msg )
+updateDiceChoiceMessageHandler isAttack dice alter model =
+    let
+        newModel =
+            if isAttack then
+                { model | attackDices = updateDiceChoice dice alter model.attackDices }
+
+            else
+                { model | defenseDices = updateDiceChoice dice alter model.defenseDices }
+    in
+    ( { newModel
+        | textInput = encodeDiceChoices ( newModel.attackDices, newModel.defenseDices )
+        , attackResult = NoAttack
+      }
+    , Cmd.none
+    )
 
 
 updateDiceChoice : Dice -> (Int -> Int) -> DiceChoice -> DiceChoice
@@ -241,20 +232,8 @@ updateDiceChoice dice alter diceChoice =
     List.map f diceChoice
 
 
-resetResult : Model -> Model
-resetResult model =
-    { model
-        | attackResult = []
-        , defenseResult = []
-        , finalResult = []
-        , attackState = NoAttack
-    }
 
-
-
---|
---| SUBSCRIPTIONS
---|
+-- SUBSCRIPTIONS
 
 
 subscriptions : Model -> Sub Msg
@@ -263,9 +242,7 @@ subscriptions _ =
 
 
 
---|
---| VIEW
---|
+-- VIEW
 
 
 view : Model -> Html Msg
@@ -318,24 +295,32 @@ viewTextInputAndFinalResultSection model =
                 text ""
             ]
         , viewConfigPanel model.config model.isConfigOpen
-        , viewResult model.attackState model.finalResult True "has-background-danger"
+        , viewFinalResult model.attackResult
         ]
 
 
 viewDiceSelectionAndResultSection : Model -> Bool -> Html Msg
-viewDiceSelectionAndResultSection model isAttack =
+viewDiceSelectionAndResultSection model isAttackSection =
     let
+        ( attackResult, defenseResult ) =
+            case model.attackResult of
+                NoAttack ->
+                    ( [], [] )
+
+                AttackResult r ->
+                    ( r.attackResult, r.defenseResult )
+
         x =
-            if isAttack then
+            if isAttackSection then
                 { diceChoice = model.attackDices
-                , result = model.attackResult
+                , result = attackResult
                 , name = "Attack"
                 , color = "has-background-link"
                 }
 
             else
                 { diceChoice = model.defenseDices
-                , result = model.defenseResult
+                , result = defenseResult
                 , name = "Defense"
                 , color = "has-background-primary"
                 }
@@ -343,22 +328,32 @@ viewDiceSelectionAndResultSection model isAttack =
     div [ class "column" ]
         [ div [ class <| "box is-hidden-mobile " ++ x.color ++ "-light" ]
             [ h2 [ class "title" ] [ text x.name ]
-            , div [] (List.map (viewChosenDiceSelector model.config isAttack) x.diceChoice)
+            , div [] (List.map (viewChosenDiceSelector model.config isAttackSection) x.diceChoice)
             ]
-        , viewResult model.attackState x.result False x.color
+        , viewResult x.result "" x.color
         ]
 
 
-viewResult : AttackState -> Roll -> Bool -> String -> Html msg
-viewResult attackState result isTextInputAndFinalResultSection color =
-    if attackState /= NoAttack && (result /= [] || isTextInputAndFinalResultSection) then
+viewFinalResult : AttackResult -> Html msg
+viewFinalResult attackState =
+    case attackState of
+        NoAttack ->
+            text ""
+
+        AttackResult x ->
+            viewResult x.finalResult "AttackFailed" "has-background-danger"
+
+
+viewResult : Roll -> String -> String -> Html msg
+viewResult result defaultText color =
+    if result /= [] || defaultText /= "" then
         div [ class <| "box " ++ color ]
             [ h2 [ class "title has-text-white" ]
-                (if attackState == AttackFailed && isTextInputAndFinalResultSection then
-                    [ text "Attack failed" ]
+                (if result /= [] then
+                    List.map (\f -> div [] [ text f ]) (printRoll result)
 
                  else
-                    List.map (\f -> div [] [ text f ]) (printRoll result)
+                    [ text "Attack failed" ]
                 )
             ]
 
@@ -369,7 +364,7 @@ viewResult attackState result isTextInputAndFinalResultSection color =
 viewChosenDiceSelector : Config -> Bool -> ( Int, Dice ) -> Html Msg
 viewChosenDiceSelector config isAttack ( n, dice ) =
     div [ class "field" ]
-        [ coloredDiceLabel config isAttack ( n, dice )
+        [ viewColoredDiceLabel config isAttack ( n, dice )
         , div [ class "control" ]
             [ input
                 [ class "input"
@@ -389,8 +384,8 @@ viewChosenDiceSelector config isAttack ( n, dice ) =
         ]
 
 
-coloredDiceLabel : Config -> Bool -> ( Int, Dice ) -> Html Msg
-coloredDiceLabel config isAttack ( n, dice ) =
+viewColoredDiceLabel : Config -> Bool -> ( Int, Dice ) -> Html Msg
+viewColoredDiceLabel config isAttack ( n, dice ) =
     if config.enableColoredLabel then
         label [ class "label", onClick (UserIncreasedDiceChoice isAttack dice) ]
             [ i
@@ -454,7 +449,7 @@ viewHeader () =
         [ h1 [ class "title is-1" ] [ text "JoA Dice" ]
         , h1 [ class "subtitle is-hidden-mobile" ]
             [ text "a helper for "
-            , a [ href "https://mythicgames.net/board-games/tol-joan-of-arc/" ]
+            , a [ href "https://boardgamegeek.com/boardgame/230791/time-legends-joan-arc" ]
                 [ text "Time of Legends: Joan of Arc" ]
             ]
         ]
@@ -477,9 +472,7 @@ viewFooter () =
 
 
 
---|
---| UTILS
---|
+-- UTILS
 
 
 intOrZeroFromString : String -> Int
