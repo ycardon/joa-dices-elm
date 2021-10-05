@@ -194,18 +194,17 @@ update msg model =
             , Cmd.none
             )
 
-        UserUpdatedDiceChoice isAttack dice value ->
-            updateDiceChoiceMessageHandler isAttack dice (\_ -> intOrZeroFromString value) model
+        UserUpdatedDiceChoice isAttackSection dice value ->
+            updateDiceChoiceMessageHandler isAttackSection dice (\_ -> intOrZeroFromString value) model
 
-        UserIncreasedDiceChoice isAttack dice ->
-            updateDiceChoiceMessageHandler isAttack dice ((+) 1) model
+        UserIncreasedDiceChoice isAttackSection dice ->
+            updateDiceChoiceMessageHandler isAttackSection dice ((+) 1) model
 
 
-updateDiceChoiceMessageHandler : Bool -> Dice -> (Int -> Int) -> Model -> ( Model, Cmd msg )
-updateDiceChoiceMessageHandler isAttack dice alter model =
+updateDiceChoiceMessageHandler isAttackSection dice alter model =
     let
         newModel =
-            if isAttack then
+            if isAttackSection then
                 { model | attackDices = updateDiceChoice dice alter model.attackDices }
 
             else
