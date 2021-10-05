@@ -47,32 +47,50 @@ type alias DiceChoice =
 
 blackDice : Dice
 blackDice =
-    { name = "Black dice", faces = [ Kill, Disrupt, Disrupt, Shield, Shield, Shield ], color = "Black" }
+    { name = "Black dice"
+    , faces = [ Kill, Disrupt, Disrupt, Shield, Shield, Shield ]
+    , color = "Black"
+    }
 
 
 redDice : Dice
 redDice =
-    { name = "Red dice", faces = [ Kill, Kill, Disrupt, Disrupt, Push, Shield ], color = "Red" }
+    { name = "Red dice"
+    , faces = [ Kill, Kill, Disrupt, Disrupt, Push, Shield ]
+    , color = "Red"
+    }
 
 
 yellowDice : Dice
 yellowDice =
-    { name = "Yellow dice", faces = [ Disrupt, Push, Push, Shield, Blank, Blank ], color = "Gold" }
+    { name = "Yellow dice"
+    , faces = [ Disrupt, Push, Push, Shield, Blank, Blank ]
+    , color = "Gold"
+    }
 
 
 whiteDice : Dice
 whiteDice =
-    { name = "White dice", faces = [ Disrupt, Disrupt, Push, Shield, Shield, Blank ], color = "Silver" }
+    { name = "White dice"
+    , faces = [ Disrupt, Disrupt, Push, Shield, Shield, Blank ]
+    , color = "Silver"
+    }
 
 
 giganticDice : Dice
 giganticDice =
-    { name = "Gigantic dice", faces = [ Kill, Disrupt, Disrupt, Push, Trample, Trample ], color = "Purple" }
+    { name = "Gigantic dice"
+    , faces = [ Kill, Disrupt, Disrupt, Push, Trample, Trample ]
+    , color = "Purple"
+    }
 
 
 doomDice : Dice
 doomDice =
-    { name = "Doom dice", faces = [ Disrupt, Death, Death, Rally, Rally, DelayedRally ], color = "Wheat" }
+    { name = "Doom dice"
+    , faces = [ Disrupt, Death, Death, Rally, Rally, DelayedRally ]
+    , color = "Wheat"
+    }
 
 
 
