@@ -2,15 +2,18 @@
   "name": "joa-dices-elm",
   "version": "1.1.0",
   "description": "Rewrite of the TypeScript project JoA Dice in Elm",
-  "targets": {
-    "default": {
-      "source": "src/index.html"
-    }
+  "source": "src/index.html",
+  "browserslist": "> 0.5%, last 2 versions, not dead",
+  "scripts": {
+    "test": "elm-test",
+    "start": "parcel",
+    "build": "rm -fr dist/ && parcel build --no-source-maps && elm-test",
+    "clean": "rm -fr node_modules/ elm-stuff/ .parcel-cache/ dist/ && npm install",
+    "deploy": "npm run build && cd ../ycardon.github.io/ && rm * && cp ../joa-dices-elm/dist/* . && git add . && git commit -m 'new version' && git push"
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^6.1.1",
-    "bulma": "^0.9.3",
-    "elm-format": "^0.8.5"
+    "bulma": "^0.9.3"
   },
   "devDependencies": {
     "@parcel/transformer-elm": "^2.4.0",
@@ -18,13 +21,6 @@
     "elm": "^0.19.1-5",
     "elm-test": "^0.19.1-revision7",
     "parcel": "^2.4.0"
-  },
-  "scripts": {
-    "test": "elm-test",
-    "serve": "parcel",
-    "build": "rm -fr dist/ && parcel build --no-source-maps",
-    "clean": "rm -fr node_modules/ elm-stuff/ .parcel-cache/ dist/ webfonts/",
-    "deploy": "npm run build && cd ../ycardon.github.io/ && rm * && cp ../joa-dices-elm/dist/* . && git add . && git commit -m 'new version' && git push"
   },
   "author": "Yann Cardon",
   "license": "ISC",
