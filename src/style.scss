@@ -1,8 +1,6 @@
 @charset "utf-8";
 
-/*
- * BULMA
- */
+// --- BULMA ---
 
 $radius-small: 5px;
 $radius: 10px;
@@ -10,34 +8,37 @@ $radius-large: 20px;
 
 $tablet: 650px;
 
-// @import "/../node_modules/bulma/bulma.sass";
+// either import the whole bulma css bundle
+@import "bulma/bulma.sass";
 
-@import "../node_modules/bulma/sass/utilities/_all.sass";
-@import "../node_modules/bulma/sass/base/_all.sass";
+// or only import the needed ones
+@import "bulma/sass/utilities/_all.sass";
+@import "bulma/sass/base/_all.sass";
 
-@import "../node_modules/bulma/sass/helpers/color.sass";
-@import "../node_modules/bulma/sass/helpers/typography.sass";
-@import "../node_modules/bulma/sass/helpers/visibility.sass";
+@import "bulma/sass/helpers/color.sass";
+@import "bulma/sass/helpers/typography.sass";
+@import "bulma/sass/helpers/visibility.sass";
 
-@import "../node_modules/bulma/sass/elements/other.sass"; // block
-@import "../node_modules/bulma/sass/elements/container.sass";
-@import "../node_modules/bulma/sass/elements/box.sass";
-@import "../node_modules/bulma/sass/elements/title.sass";
-@import "../node_modules/bulma/sass/elements/button.sass";
+@import "bulma/sass/elements/other.sass"; // block
+@import "bulma/sass/elements/container.sass";
+@import "bulma/sass/elements/box.sass";
+@import "bulma/sass/elements/title.sass";
+@import "bulma/sass/elements/button.sass";
 
-@import "../node_modules/bulma/sass/form/shared.sass";
-@import "../node_modules/bulma/sass/form/tools.sass";
-@import "../node_modules/bulma/sass/form/input-textarea.sass";
-@import "../node_modules/bulma/sass/form/checkbox-radio.sass";
+@import "bulma/sass/form/shared.sass";
+@import "bulma/sass/form/tools.sass";
+@import "bulma/sass/form/input-textarea.sass";
+@import "bulma/sass/form/checkbox-radio.sass";
 
-@import "../node_modules/bulma/sass/layout/section.sass";
-@import "../node_modules/bulma/sass/layout/footer.sass";
+@import "bulma/sass/layout/section.sass";
+@import "bulma/sass/layout/footer.sass";
 
-@import "../node_modules/bulma/sass/grid/columns.sass";
+@import "bulma/sass/grid/columns.sass";
 
-/*
- * FONT-AWESOME
- */
+// --- FONT-AWESOME ---
 
-@import "../node_modules/@fortawesome/fontawesome-free/scss/fontawesome.scss";
-@import "../node_modules/@fortawesome/fontawesome-free/scss/solid.scss"
+// help fontawesome to find its fonts (https://stackoverflow.com/questions/57243755/webpack-module-not-found-error-cant-resolve-webfonts-fa-solid-900-eot)
+$fa-font-path: '../node_modules/@fortawesome/fontawesome-free/webfonts';
+
+@import "@fortawesome/fontawesome-free/scss/fontawesome.scss";
+@import "@fortawesome/fontawesome-free/scss/solid.scss";

@@ -1,9 +1,8 @@
 module JoaDiceTest exposing (..)
 
-import Expect exposing (Expectation)
+import Expect
 import JoaDice exposing (..)
 import Test exposing (..)
-
 
 suite : Test
 suite =
