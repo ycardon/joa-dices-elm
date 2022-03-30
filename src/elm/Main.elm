@@ -15,6 +15,7 @@ import Random
 -- MAIN
 
 
+main : Program () Model Msg
 main =
     Browser.element
         { init = init
@@ -201,6 +202,7 @@ update msg model =
             updateDiceChoiceMessageHandler isAttackSection dice ((+) 1) model
 
 
+updateDiceChoiceMessageHandler : Bool -> Dice -> (Int -> Int) -> Model -> ( Model, Cmd Msg )
 updateDiceChoiceMessageHandler isAttackSection dice alter model =
     let
         newModel =
@@ -479,6 +481,7 @@ intOrZeroFromString value =
     Maybe.withDefault 0 (String.toInt value)
 
 
+heartString : String
 heartString =
     String.fromChar (Char.fromCode 10084)
 
